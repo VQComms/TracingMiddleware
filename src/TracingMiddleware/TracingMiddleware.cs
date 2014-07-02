@@ -1,38 +1,39 @@
 ﻿namespace TracingMiddleware
 {
     using System;
-    using System.Collections.Generic;
     using System.Linq;
-    using System.Threading.Tasks;
 
-    public class TracingMiddleware
+    using MidFunc = System.Func<
+       System.Func<System.Collections.Generic.IDictionary<string, object>, System.Threading.Tasks.Task>,
+       System.Func<System.Collections.Generic.IDictionary<string, object>, System.Threading.Tasks.Task>
+       >;
+
+    public static class TracingMiddleware
     {
-        private readonly Func<IDictionary<string, object>, Task> nextFunc;
-        private readonly TracingMiddlewareOptions tracingMiddlewareOptions;
-
-        public TracingMiddleware(  Func<IDictionary<string, object>, Task> nextFunc, TracingMiddlewareOptions tracingMiddlewareOptions)
+        public static MidFunc Tracing(TracingMiddlewareOptions tracingMiddlewareOptions)
         {
-            this.nextFunc = nextFunc;
-            this.tracingMiddlewareOptions = tracingMiddlewareOptions;
-        }
+            return
+                next =>
+                    async environment =>
+                    {
+                        var requestItems =
+                            environment.Where(x => x.Key.StartsWith("owin.request", StringComparison.OrdinalIgnoreCase));
 
-        public async Task Invoke(IDictionary<string, object> environment)
-        {
-            var requestItems = environment.Where(x => x.Key.StartsWith("owin.request", StringComparison.OrdinalIgnoreCase));
-            
-            foreach (var item in requestItems)
-            {
-                this.tracingMiddlewareOptions.Log(item.Key, item.Value);
-            }
+                        foreach (var item in requestItems)
+                        {
+                            tracingMiddlewareOptions.Log(item.Key, item.Value);
+                        }
 
-            await this.nextFunc(environment);
+                        await next(environment);
 
-            var responseItems = environment.Where(x => !x.Key.StartsWith("owin.request", StringComparison.OrdinalIgnoreCase));
+                        var responseItems =
+                            environment.Where(x => !x.Key.StartsWith("owin.request", StringComparison.OrdinalIgnoreCase));
 
-            foreach (var item in responseItems)
-            {
-                this.tracingMiddlewareOptions.Log(item.Key, item.Value);
-            }
+                        foreach (var item in responseItems)
+                        {
+                            tracingMiddlewareOptions.Log(item.Key, item.Value);
+                        }
+                    };
         }
     }
 }
