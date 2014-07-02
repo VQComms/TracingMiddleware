@@ -11,28 +11,28 @@
 
     public static class TracingMiddleware
     {
-        public static MidFunc Tracing(TracingMiddlewareOptions tracingMiddlewareOptions)
+        public static MidFunc Tracing(TracingMiddlewareOptions tracingMiddlewareOptions = null)
         {
+            tracingMiddlewareOptions = tracingMiddlewareOptions ?? new TracingMiddlewareOptions();
             return
                 next =>
                     async environment =>
                     {
                         var stopWatch = new Stopwatch();
-                        tracingMiddlewareOptions.Log("Request Start", null);
-                        
+                        tracingMiddlewareOptions.Interpreter.Interpret("Request Start", "");
 
                         var requestItems =
                             environment.Where(x => x.Key.StartsWith("owin.request", StringComparison.OrdinalIgnoreCase));
 
                         foreach (var item in requestItems)
                         {
-                            tracingMiddlewareOptions.Log(item.Key, item.Value);
+                            tracingMiddlewareOptions.Interpreter.Interpret(item.Key, item.Value);
                         }
-                        
+
                         stopWatch.Start();
-                        
+
                         await next(environment);
-                        
+
                         stopWatch.Stop();
 
                         var responseItems =
@@ -40,11 +40,11 @@
 
                         foreach (var item in responseItems)
                         {
-                            tracingMiddlewareOptions.Log(item.Key, item.Value);
+                            tracingMiddlewareOptions.Interpreter.Interpret(item.Key, item.Value);
                         }
 
-                        tracingMiddlewareOptions.Log("Request Finished", null);
-                        tracingMiddlewareOptions.Log("Execution Time", stopWatch.ElapsedMilliseconds);
+                        tracingMiddlewareOptions.Interpreter.Interpret("Request Finished", "");
+                        tracingMiddlewareOptions.Interpreter.Interpret("Execution Time", stopWatch.ElapsedMilliseconds);
                     };
         }
     }

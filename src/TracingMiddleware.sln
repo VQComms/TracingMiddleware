@@ -14,6 +14,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{FE0911
 		.nuget\NuGet.targets = .nuget\NuGet.targets
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TracingMiddleware.Demo", "TracingMiddleware.Demo\TracingMiddleware.Demo.csproj", "{482B8951-437C-47B4-AD99-D2079CBF32E7}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -28,6 +30,10 @@ Global
 		{0CB943C0-C86D-4903-BB0C-DA32046418A5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0CB943C0-C86D-4903-BB0C-DA32046418A5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0CB943C0-C86D-4903-BB0C-DA32046418A5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{482B8951-437C-47B4-AD99-D2079CBF32E7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{482B8951-437C-47B4-AD99-D2079CBF32E7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{482B8951-437C-47B4-AD99-D2079CBF32E7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{482B8951-437C-47B4-AD99-D2079CBF32E7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

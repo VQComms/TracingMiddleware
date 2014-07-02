@@ -15,120 +15,120 @@
 
     public class TracingMiddlewareTests
     {
-        [Fact]
-        public async Task Should_Log_Incoming_Request_Keys()
-        {
-            //Given
-            var logged = false;
-            var requestList = new List<string>();
+        //[Fact]
+        //public async Task Should_Log_Incoming_Request_Keys()
+        //{
+        //    //Given
+        //    var logged = false;
+        //    var requestList = new List<string>();
 
-            var options = GetTracingMiddlewareOptions();
-            options.Log = (key, value) =>
-            {
-                logged = true;
-                requestList.Add(key);
-            };
+        //    var options = GetTracingMiddlewareOptions();
+        //    options.Log = (key, value) =>
+        //    {
+        //        logged = true;
+        //        requestList.Add(key);
+        //    };
 
-            var tracingpipeline = CreateTracingOwinPipeline(GetNextFunc(), options);
+        //    var tracingpipeline = CreateTracingOwinPipeline(GetNextFunc(), options);
 
-            var environment = GetEnvironment();
+        //    var environment = GetEnvironment();
 
-            //When
-            await tracingpipeline(environment);
+        //    //When
+        //    await tracingpipeline(environment);
 
-            //Then
-            Assert.True(logged);
-            Assert.Equal(2, requestList.Count);
-        }
+        //    //Then
+        //    Assert.True(logged);
+        //    Assert.Equal(2, requestList.Count);
+        //}
 
-        [Fact]
-        public async Task Should_Log_Response_Keys()
-        {
-            //Given
-            var logged = false;
-            var requestList = new List<string>();
+        //[Fact]
+        //public async Task Should_Log_Response_Keys()
+        //{
+        //    //Given
+        //    var logged = false;
+        //    var requestList = new List<string>();
 
-            var options = GetTracingMiddlewareOptions();
-            options.Log = (s, o) =>
-            {
-                if (s.StartsWith("owin.request", StringComparison.OrdinalIgnoreCase))
-                {
-                    return;
-                }
+        //    var options = GetTracingMiddlewareOptions();
+        //    options.Log = (s, o) =>
+        //    {
+        //        if (s.StartsWith("owin.request", StringComparison.OrdinalIgnoreCase))
+        //        {
+        //            return;
+        //        }
 
-                logged = true;
-                requestList.Add(s);
-            };
+        //        logged = true;
+        //        requestList.Add(s);
+        //    };
 
-            var tracingpipeline = CreateTracingOwinPipeline(GetNextFuncWithOwinResponseKeys(), options);
+        //    var tracingpipeline = CreateTracingOwinPipeline(GetNextFuncWithOwinResponseKeys(), options);
 
-            var environment = GetEnvironment();
+        //    var environment = GetEnvironment();
 
-            //When
-            await tracingpipeline(environment);
+        //    //When
+        //    await tracingpipeline(environment);
 
-            //Then
-            Assert.True(logged);
-            Assert.Equal(1, requestList.Count);
-        }
+        //    //Then
+        //    Assert.True(logged);
+        //    Assert.Equal(1, requestList.Count);
+        //}
 
-        [Fact]
-        public async Task Should_Log_Other_Keys()
-        {
-            //Given
-            var logged = false;
-            var requestList = new List<string>();
+        //[Fact]
+        //public async Task Should_Log_Other_Keys()
+        //{
+        //    //Given
+        //    var logged = false;
+        //    var requestList = new List<string>();
 
-            var options = GetTracingMiddlewareOptions();
-            options.Log = (key, value) =>
-            {
-                if (key.StartsWith("owin.request", StringComparison.OrdinalIgnoreCase))
-                {
-                    return;
-                }
+        //    var options = GetTracingMiddlewareOptions();
+        //    options.Log = (key, value) =>
+        //    {
+        //        if (key.StartsWith("owin.request", StringComparison.OrdinalIgnoreCase))
+        //        {
+        //            return;
+        //        }
 
-                logged = true;
-                requestList.Add(key);
-            };
+        //        logged = true;
+        //        requestList.Add(key);
+        //    };
 
-            var next = GetNextFuncWithOwinResponseAndServerKeys();
+        //    var next = GetNextFuncWithOwinResponseAndServerKeys();
 
-            var tracingpipeline = CreateTracingOwinPipeline(next, options);
+        //    var tracingpipeline = CreateTracingOwinPipeline(next, options);
 
-            var environment = GetEnvironment();
+        //    var environment = GetEnvironment();
 
-            //When
-            await tracingpipeline(environment);
+        //    //When
+        //    await tracingpipeline(environment);
 
-            //Then
-            Assert.True(logged);
-            Assert.Equal(2, requestList.Count);
-        }
+        //    //Then
+        //    Assert.True(logged);
+        //    Assert.Equal(2, requestList.Count);
+        //}
 
-        [Fact]
-        public async Task Should_Log_Execution_Time()
-        {
-            //Given
-            var requestList = new List<string>();
+        //[Fact]
+        //public async Task Should_Log_Execution_Time()
+        //{
+        //    //Given
+        //    var requestList = new List<string>();
 
-            var options = GetTracingMiddlewareOptions();
-            options.Log = (key, value) =>
-            {
-                requestList.Add(key);
-            };
+        //    var options = GetTracingMiddlewareOptions();
+        //    options.Log = (key, value) =>
+        //    {
+        //        requestList.Add(key);
+        //    };
             
-            var next = GetNextFunc();
+        //    var next = GetNextFunc();
 
-            var tracingpipeline = CreateTracingOwinPipeline(next, options);
+        //    var tracingpipeline = CreateTracingOwinPipeline(next, options);
 
-            var environment = GetEnvironment();
+        //    var environment = GetEnvironment();
 
-            //When
-            await tracingpipeline(environment);
+        //    //When
+        //    await tracingpipeline(environment);
 
-            //Then
-            Assert.NotNull(requestList.FirstOrDefault(x => x == "Execution Time"));
-        }
+        //    //Then
+        //    Assert.NotNull(requestList.FirstOrDefault(x => x == "Execution Time"));
+        //}
 
         private Dictionary<string, object> GetEnvironment()
         {
