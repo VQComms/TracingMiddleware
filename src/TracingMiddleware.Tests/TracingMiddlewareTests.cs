@@ -5,40 +5,43 @@
     using System.Threading.Tasks;
     using Xunit;
 
+    using AppFunc = System.Func<System.Collections.Generic.IDictionary<string, object>, System.Threading.Tasks.Task>;
+
+    using MidFunc = System.Func<
+      System.Func<System.Collections.Generic.IDictionary<string, object>, System.Threading.Tasks.Task>,
+      System.Func<System.Collections.Generic.IDictionary<string, object>, System.Threading.Tasks.Task>
+      >;
+
     public class TracingMiddlewareTests
     {
         [Fact]
-        public void Should_Log_Incoming_Request_Keys() 
+        public async Task Should_Log_Incoming_Request_Keys()
         {
             //Given
             var logged = false;
             var requestList = new List<string>();
 
             var options = GetTracingMiddlewareOptions();
-            options.Log = (s, o) =>
+            options.Log = (key, value) =>
             {
                 logged = true;
-                requestList.Add(s);
+                requestList.Add(key);
             };
 
-            var tracing = GetTracingMiddleware(GetNextFunc(), options);
-            var environment = new Dictionary<string, object>
-            {
-                {"owin.RequestHeaders", new Dictionary<string, string[]>() {{"Accept", new[] {"application/json"}}}},
-                {"owin.RequestPath", "/"}
-            };
+            var tracingpipleline = CreateTracingOwinPipeline(GetNextFunc(), options);
+
+            var environment = GetEnvironment();
 
             //When
-            var task = tracing.Invoke(environment);
+            await tracingpipleline(environment);
 
             //Then
             Assert.True(logged);
             Assert.Equal(2, requestList.Count);
-
         }
 
         [Fact]
-        public void Should_Log_Response_Keys()
+        public async Task Should_Log_Response_Keys()
         {
             //Given
             var logged = false;
@@ -56,16 +59,12 @@
                 requestList.Add(s);
             };
 
-            var tracing = GetTracingMiddleware(GetNextFunc(addResponseKeys: true), options);
+            var tracingpipleline = CreateTracingOwinPipeline(GetNextFuncWithOwinResponseKeys(), options);
 
-            var environment = new Dictionary<string, object>
-            {
-                {"owin.RequestHeaders", new Dictionary<string, string[]>() {{"Accept", new[] {"application/json"}}}},
-                {"owin.RequestPath", "/"}
-            };
+            var environment = GetEnvironment();
 
             //When
-            var task = tracing.Invoke(environment);
+            await tracingpipleline(environment);
 
             //Then
             Assert.True(logged);
@@ -73,65 +72,76 @@
         }
 
         [Fact]
-        public void Should_Log_Other_Keys()
+        public async Task Should_Log_Other_Keys()
         {
             //Given
             var logged = false;
             var requestList = new List<string>();
 
             var options = GetTracingMiddlewareOptions();
-            options.Log = (s, o) =>
+            options.Log = (key, value) =>
             {
-                if (s.StartsWith("owin.request", StringComparison.OrdinalIgnoreCase))
+                if (key.StartsWith("owin.request", StringComparison.OrdinalIgnoreCase))
                 {
                     return;
                 }
 
                 logged = true;
-                requestList.Add(s);
+                requestList.Add(key);
             };
 
-            Func<IDictionary<string, object>, Task> func = objects =>
-               {
-                   objects.Add("owin.ResponseStatusCode", 200);
-                   objects.Add("server.user", "VincentVega");
-                   return Task.FromResult(123);
-               };
+            var next = GetNextFuncWithOwinResponseAndServerKeys();
 
-            var tracing = GetTracingMiddleware(func, options);
+            var tracingpipleline = CreateTracingOwinPipeline(next, options);
 
-            var environment = new Dictionary<string, object>
-            {
-                {"owin.RequestHeaders", new Dictionary<string, string[]>() {{"Accept", new[] {"application/json"}}}},
-                {"owin.RequestPath", "/"}
-            };
+            var environment = GetEnvironment();
 
             //When
-            var task = tracing.Invoke(environment);
+            await tracingpipleline(environment);
 
             //Then
             Assert.True(logged);
             Assert.Equal(2, requestList.Count);
         }
 
-        public Func<IDictionary<string, object>, Task> GetNextFunc(bool addResponseKeys = false)
+        private Dictionary<string, object> GetEnvironment()
         {
-            if (addResponseKeys)
+            var environment = new Dictionary<string, object>
             {
-                return objects =>
-                {
-                    objects.Add("owin.ResponseStatusCode", 200);
-                    return Task.FromResult(123);
-                };
-            }
-
-            return objects => Task.FromResult(123);
+                {"owin.RequestHeaders", new Dictionary<string, string[]>() {{"Accept", new[] {"application/json"}}}},
+                {"owin.RequestPath", "/"}
+            };
+            return environment;
         }
 
-        public TracingMiddleware GetTracingMiddleware(Func<IDictionary<string, object>, Task> nextFunc, TracingMiddlewareOptions tracingMiddlewareOptions = null)
+        public AppFunc GetNextFunc()
+        {
+            return env => Task.FromResult(123);
+        }
+
+        private AppFunc GetNextFuncWithOwinResponseKeys()
+        {
+            return env =>
+            {
+                env.Add("owin.ResponseStatusCode", 200);
+                return Task.FromResult(123);
+            };
+        }
+
+        private AppFunc GetNextFuncWithOwinResponseAndServerKeys()
+        {
+            return env =>
+            {
+                env.Add("owin.ResponseStatusCode", 200);
+                env.Add("server.user", "VincentVega");
+                return Task.FromResult(123);
+            };
+        }
+
+        public AppFunc CreateTracingOwinPipeline(AppFunc nextFunc, TracingMiddlewareOptions tracingMiddlewareOptions = null)
         {
             tracingMiddlewareOptions = tracingMiddlewareOptions ?? GetTracingMiddlewareOptions();
-            return new TracingMiddleware(nextFunc, tracingMiddlewareOptions);
+            return TracingMiddleware.Tracing(tracingMiddlewareOptions)(nextFunc);
         }
 
         private TracingMiddlewareOptions GetTracingMiddlewareOptions()
