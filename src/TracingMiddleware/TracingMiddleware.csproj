@@ -40,7 +40,7 @@
     <Compile Include="ITracingMiddlewareInterpreter.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TracingMiddleware.cs" />
-    <Compile Include="TracingMiddlewareInterpreter.cs" />
+    <Compile Include="DefaultTracingMiddlewareInterpreter.cs" />
     <Compile Include="TracingMiddlewareOptions.cs" />
     <Compile Include="TypeSwitch.cs" />
   </ItemGroup>

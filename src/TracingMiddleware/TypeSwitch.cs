@@ -119,7 +119,6 @@
                     }
 
                     var sourceType = this.value.GetType();
-                    Debug.WriteLine(sourceType);
                     var targetType = typeof(TTarget);
                     if (targetType.IsAssignableFrom(sourceType))
                     {

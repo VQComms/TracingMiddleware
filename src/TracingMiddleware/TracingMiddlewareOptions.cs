@@ -4,7 +4,7 @@
     {
         public TracingMiddlewareOptions()
         {
-            Interpreter = new TracingMiddlewareInterpreter();
+            Interpreter = new DefaultTracingMiddlewareInterpreter();
         }
         
         public ITracingMiddlewareInterpreter Interpreter { get; set; }

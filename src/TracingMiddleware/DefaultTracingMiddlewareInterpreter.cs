@@ -6,12 +6,14 @@ namespace TracingMiddleware
     using System.IO;
     using System.Threading;
 
-    public class TracingMiddlewareInterpreter : ITracingMiddlewareInterpreter
+    public class DefaultTracingMiddlewareInterpreter : ITracingMiddlewareInterpreter
     {
-        public TracingMiddlewareInterpreter()
+        public DefaultTracingMiddlewareInterpreter()
         {
             Log = (key, value) => Console.WriteLine(key + ":" + value);
         }
+
+        public Action<string, string> Log { get; set; }
 
         public void Interpret(string key, object value)
         {
@@ -50,6 +52,5 @@ namespace TracingMiddleware
             Log(key, interpretedvalue);
         }
 
-        public Action<string, string> Log { get; set; }
     }
 }
