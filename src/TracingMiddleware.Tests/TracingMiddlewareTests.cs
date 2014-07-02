@@ -2,6 +2,7 @@
 {
     using System;
     using System.Collections.Generic;
+    using System.Linq;
     using System.Threading.Tasks;
     using Xunit;
 
@@ -28,12 +29,12 @@
                 requestList.Add(key);
             };
 
-            var tracingpipleline = CreateTracingOwinPipeline(GetNextFunc(), options);
+            var tracingpipeline = CreateTracingOwinPipeline(GetNextFunc(), options);
 
             var environment = GetEnvironment();
 
             //When
-            await tracingpipleline(environment);
+            await tracingpipeline(environment);
 
             //Then
             Assert.True(logged);
@@ -59,12 +60,12 @@
                 requestList.Add(s);
             };
 
-            var tracingpipleline = CreateTracingOwinPipeline(GetNextFuncWithOwinResponseKeys(), options);
+            var tracingpipeline = CreateTracingOwinPipeline(GetNextFuncWithOwinResponseKeys(), options);
 
             var environment = GetEnvironment();
 
             //When
-            await tracingpipleline(environment);
+            await tracingpipeline(environment);
 
             //Then
             Assert.True(logged);
@@ -92,16 +93,41 @@
 
             var next = GetNextFuncWithOwinResponseAndServerKeys();
 
-            var tracingpipleline = CreateTracingOwinPipeline(next, options);
+            var tracingpipeline = CreateTracingOwinPipeline(next, options);
 
             var environment = GetEnvironment();
 
             //When
-            await tracingpipleline(environment);
+            await tracingpipeline(environment);
 
             //Then
             Assert.True(logged);
             Assert.Equal(2, requestList.Count);
+        }
+
+        [Fact]
+        public async Task Should_Log_Execution_Time()
+        {
+            //Given
+            var requestList = new List<string>();
+
+            var options = GetTracingMiddlewareOptions();
+            options.Log = (key, value) =>
+            {
+                requestList.Add(key);
+            };
+            
+            var next = GetNextFunc();
+
+            var tracingpipeline = CreateTracingOwinPipeline(next, options);
+
+            var environment = GetEnvironment();
+
+            //When
+            await tracingpipeline(environment);
+
+            //Then
+            Assert.NotNull(requestList.FirstOrDefault(x => x == "Execution Time"));
         }
 
         private Dictionary<string, object> GetEnvironment()
