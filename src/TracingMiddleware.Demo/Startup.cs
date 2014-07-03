@@ -1,8 +1,10 @@
 ﻿namespace TracingMiddleware.Demo
 {
     using System;
+    using System.Collections.Generic;
     using System.Diagnostics;
     using System.IO;
+    using System.Linq;
     using Owin;
 
     public class Startup
@@ -13,13 +15,21 @@
             var options = TracingMiddlewareOptions.Default
                 .Ignore(key => key.StartsWith(""))
                 .Include(key => key.StartsWith("owin."))
-                
+
                 .Ignore<Stream>();
 
+            Func<IDictionary<string, object>, bool> internalfilter = environment =>
+            {
+                var owinkvp = environment.FirstOrDefault(x => x.Key == "owin.ResponseStatusCode" && (int) x.Value == 500);
+                return !owinkvp.Equals(default(KeyValuePair<string, object>));
+            };
+
+            var filters = new[] {internalfilter };
+
             var otheroptions =
-                new TracingMiddlewareOptions(Trace, MessageFormat, DefaultTypeFormat, IsEnabled).ForKey(
+                new TracingMiddlewareOptions(Trace, MessageFormat, DefaultTypeFormat, filters, IsEnabled).ForKey(
                     "owin.ResponseStatusCode", s => Debug.WriteLine(s));
-            
+
             app
                 .Use(TracingMiddleware.Tracing(otheroptions))
                 .UseNancy();

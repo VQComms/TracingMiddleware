@@ -22,7 +22,7 @@
         public static readonly TypeFormat DefaultTypeFormat = value => value.ToString();
         public static readonly Trace ConsoleTrace = Console.WriteLine;
         public static readonly TracingMiddlewareOptions Default;
-
+        public static readonly IEnumerable<Func<IDictionary<string, object>, bool>> DefaultTracingFilters = Enumerable.Empty<Func<IDictionary<string, object>, bool>>(); 
         private readonly TypeFormat defaultTypeFormat;
         private readonly List<Predicate<string>> ignoreKeyPredicates = new List<Predicate<string>>();
         private readonly HashSet<string> ignoreKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -33,6 +33,8 @@
         private readonly Func<bool> isEnabled;
         private readonly Dictionary<string, Trace> keyTracers = new Dictionary<string, Trace>();
         private readonly MessageFormat messageFormat;
+        private readonly IEnumerable<Func<IDictionary<string, object>, bool>> filters; 
+
 
         private readonly ConcurrentDictionary<string, bool> shouldIgnoreKeyCache =
             new ConcurrentDictionary<string, bool>();
@@ -70,27 +72,26 @@
         }
 
         public TracingMiddlewareOptions(Func<bool> isEnabled = null)
-            : this(ConsoleTrace, DefaultMessageFormat, DefaultTypeFormat, isEnabled)
+            : this(ConsoleTrace, DefaultMessageFormat, DefaultTypeFormat, DefaultTracingFilters,isEnabled)
         {
         }
 
         public TracingMiddlewareOptions(Trace trace, Func<bool> isEnabled = null)
-            : this(trace, DefaultMessageFormat, DefaultTypeFormat, isEnabled)
+            : this(trace, DefaultMessageFormat, DefaultTypeFormat, DefaultTracingFilters,isEnabled )
         {
         }
 
         public TracingMiddlewareOptions(Trace trace, MessageFormat messageFormat, Func<bool> isEnabled = null)
-            : this(trace, messageFormat, DefaultTypeFormat, isEnabled)
+            : this(trace, messageFormat, DefaultTypeFormat, DefaultTracingFilters,isEnabled)
         {
         }
 
         public TracingMiddlewareOptions(Trace trace, TypeFormat defaultTypeformat, Func<bool> isEnabled = null)
-            : this(trace, DefaultMessageFormat, defaultTypeformat, isEnabled)
+            : this(trace, DefaultMessageFormat, defaultTypeformat, DefaultTracingFilters,isEnabled)
         {
         }
 
-        public TracingMiddlewareOptions(Trace trace, MessageFormat messageFormat, TypeFormat defaultTypeFormat,
-            Func<bool> isEnabled = null)
+        public TracingMiddlewareOptions(Trace trace, MessageFormat messageFormat, TypeFormat defaultTypeFormat, IEnumerable<Func<IDictionary<string, object>, bool>> filters, Func<bool> isEnabled = null)
         {
             if (trace == null) throw new ArgumentNullException("trace");
             if (messageFormat == null) throw new ArgumentNullException("messageFormat");
@@ -100,6 +101,7 @@
             this.messageFormat = messageFormat;
             this.defaultTypeFormat = defaultTypeFormat;
             this.isEnabled = isEnabled ?? (() => true);
+            this.filters = filters;
         }
 
         public Trace Trace
@@ -115,6 +117,11 @@
         public MessageFormat MessageFormat
         {
             get { return messageFormat; }
+        }
+
+        public IEnumerable<Func<IDictionary<string, object>, bool>> Filters
+        {
+            get { return filters; }
         }
 
         public TracingMiddlewareOptions ForType<T>(Func<T, string> format)

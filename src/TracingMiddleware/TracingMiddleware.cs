@@ -2,7 +2,7 @@
 {
     using System;
     using System.Diagnostics;
-
+    using System.Linq;
     using AppFunc = System.Func<System.Collections.Generic.IDictionary<string, object>, System.Threading.Tasks.Task>;
 
     using MidFunc = System.Func<
@@ -24,13 +24,13 @@
 
             return Tracing(new TracingMiddlewareOptionsTracer(getOptions));
         }
-        
+
         public static MidFunc Tracing(ITracer tracer)
         {
             if (tracer == null) throw new ArgumentNullException("tracer");
 
             tracer = new SafeTracer(tracer);
-            
+
             MidFunc traceRequest = next => async env =>
             {
                 tracer.Trace("Request Start");
@@ -38,9 +38,12 @@
                 await next(env);
                 stopWatch.Stop();
 
-                foreach (var item in env)
+                if (tracer.Filters.All(filter => filter.Invoke(env)))
                 {
-                    tracer.Trace(item.Key, item.Value);
+                    foreach (var item in env)
+                    {
+                        tracer.Trace(item.Key, item.Value);
+                    }
                 }
 
                 tracer.Trace(string.Format("Request completed in {0} ms", stopWatch.ElapsedMilliseconds));
