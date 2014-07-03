@@ -37,12 +37,12 @@
     <Reference Include="Microsoft.CSharp" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ITracingMiddlewareInterpreter.cs" />
+    <Compile Include="ITracer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SafeTracer.cs" />
     <Compile Include="TracingMiddleware.cs" />
-    <Compile Include="DefaultTracingMiddlewareInterpreter.cs" />
     <Compile Include="TracingMiddlewareOptions.cs" />
-    <Compile Include="TypeSwitch.cs" />
+    <Compile Include="TracingMiddlewareOptionsTracer.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="$(SolutionDir)\.nuget\NuGet.targets" Condition="Exists('$(SolutionDir)\.nuget\NuGet.targets')" />
