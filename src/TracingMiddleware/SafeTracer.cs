@@ -2,23 +2,23 @@
 {
     internal class SafeTracer : ITracer
     {
-        private readonly ITracer _inner;
+        private readonly ITracer inner;
 
         internal SafeTracer(ITracer inner)
         {
-            _inner = inner;
+            this.inner = inner;
         }
 
         public bool IsEnabled
         {
-            get { return _inner.IsEnabled; }
+            get { return inner.IsEnabled; }
         }
 
         public void Trace(string message)
         {
             try
             {
-                _inner.Trace(message);
+                inner.Trace(message);
             }
             catch { }
         }
@@ -27,7 +27,7 @@
         {
             try
             {
-                _inner.Trace(key, value);
+                inner.Trace(key, value);
             }
             catch { }
         }

@@ -18,24 +18,33 @@
     {
         public static readonly MessageFormat DefaultMessageFormat =
             (key, value) => string.Format("{0} : {1}", key, value);
+
         public static readonly TypeFormat DefaultTypeFormat = value => value.ToString();
         public static readonly Trace ConsoleTrace = Console.WriteLine;
         public static readonly TracingMiddlewareOptions Default;
 
-        private readonly TypeFormat _defaultTypeFormat;
-        private readonly HashSet<string> _ignoreKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        private readonly HashSet<string> _includeKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        private readonly List<Predicate<string>> _ignoreKeyPredicates = new List<Predicate<string>>();
-        private readonly List<Predicate<string>> _includeKeyPredicates = new List<Predicate<string>>();
-        private readonly HashSet<Type> _ignoreTypes = new HashSet<Type>();
-        private readonly HashSet<Type> _includeTypes = new HashSet<Type>();
-        private readonly Func<bool> _isEnabled;
-        private readonly MessageFormat _messageFormat;
-        private readonly Trace _trace;
-        private readonly Dictionary<Type, TypeFormat> _typeFormatters = new Dictionary<Type, TypeFormat>();
-        private readonly ConcurrentDictionary<Type, bool> _shouldIgnoreTypeCache = new ConcurrentDictionary<Type, bool>();
-        private readonly ConcurrentDictionary<string, bool> _shouldIgnoreKeyCache = new ConcurrentDictionary<string, bool>();
-        private readonly ConcurrentDictionary<Type, TypeFormat> _typeFormattersCache = new ConcurrentDictionary<Type, TypeFormat>(); 
+        private readonly TypeFormat defaultTypeFormat;
+        private readonly List<Predicate<string>> ignoreKeyPredicates = new List<Predicate<string>>();
+        private readonly HashSet<string> ignoreKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        private readonly HashSet<Type> ignoreTypes = new HashSet<Type>();
+        private readonly List<Predicate<string>> includeKeyPredicates = new List<Predicate<string>>();
+        private readonly HashSet<string> includeKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        private readonly HashSet<Type> includeTypes = new HashSet<Type>();
+        private readonly Func<bool> isEnabled;
+        private readonly Dictionary<string, Trace> keyTracers = new Dictionary<string, Trace>();
+        private readonly MessageFormat messageFormat;
+
+        private readonly ConcurrentDictionary<string, bool> shouldIgnoreKeyCache =
+            new ConcurrentDictionary<string, bool>();
+
+        private readonly ConcurrentDictionary<Type, bool> shouldIgnoreTypeCache =
+            new ConcurrentDictionary<Type, bool>();
+
+        private readonly Trace trace;
+        private readonly Dictionary<Type, TypeFormat> typeFormatters = new Dictionary<Type, TypeFormat>();
+
+        private readonly ConcurrentDictionary<Type, TypeFormat> typeFormattersCache =
+            new ConcurrentDictionary<Type, TypeFormat>();
 
         static TracingMiddlewareOptions()
         {
@@ -56,128 +65,154 @@
                     }
                 })
                 .ForType<IDictionary<string, string[]>>(
-                    headers => string.Join(",", 
+                    headers => string.Join(",",
                         headers.Select(header => string.Format("[{0}:{1}]", header.Key, string.Join(",", header.Value)))));
         }
 
         public TracingMiddlewareOptions(Func<bool> isEnabled = null)
             : this(ConsoleTrace, DefaultMessageFormat, DefaultTypeFormat, isEnabled)
-        {}
+        {
+        }
 
         public TracingMiddlewareOptions(Trace trace, Func<bool> isEnabled = null)
             : this(trace, DefaultMessageFormat, DefaultTypeFormat, isEnabled)
-        {}
+        {
+        }
 
         public TracingMiddlewareOptions(Trace trace, MessageFormat messageFormat, Func<bool> isEnabled = null)
             : this(trace, messageFormat, DefaultTypeFormat, isEnabled)
-        {}
+        {
+        }
 
         public TracingMiddlewareOptions(Trace trace, TypeFormat defaultTypeformat, Func<bool> isEnabled = null)
             : this(trace, DefaultMessageFormat, defaultTypeformat, isEnabled)
-        {}
+        {
+        }
 
-        public TracingMiddlewareOptions(Trace trace, MessageFormat messageFormat, TypeFormat defaultTypeFormat, Func<bool> isEnabled = null)
+        public TracingMiddlewareOptions(Trace trace, MessageFormat messageFormat, TypeFormat defaultTypeFormat,
+            Func<bool> isEnabled = null)
         {
             if (trace == null) throw new ArgumentNullException("trace");
             if (messageFormat == null) throw new ArgumentNullException("messageFormat");
             if (defaultTypeFormat == null) throw new ArgumentNullException("defaultTypeFormat");
 
-            _trace = trace;
-            _messageFormat = messageFormat;
-            _defaultTypeFormat = defaultTypeFormat;
-            _isEnabled = isEnabled ?? (() => true);
+            this.trace = trace;
+            this.messageFormat = messageFormat;
+            this.defaultTypeFormat = defaultTypeFormat;
+            this.isEnabled = isEnabled ?? (() => true);
         }
 
         public Trace Trace
         {
-            get { return _trace; }
+            get { return trace; }
         }
 
         public bool IsEnabled
         {
-            get { return _isEnabled(); }
+            get { return isEnabled(); }
         }
 
         public MessageFormat MessageFormat
         {
-            get { return _messageFormat; }
+            get { return messageFormat; }
         }
 
         public TracingMiddlewareOptions ForType<T>(Func<T, string> format)
         {
-            _typeFormatters.Add(typeof(T), value => format((T) value));
+            typeFormatters.Add(typeof (T), value => format((T) value));
             return this;
         }
 
         public TracingMiddlewareOptions ForType<T>(IFormatProvider formatProvider, string format)
         {
-            _typeFormatters.Add(typeof(T), value => string.Format(formatProvider, format, value));
+            typeFormatters.Add(typeof (T), value => string.Format(formatProvider, format, value));
+            return this;
+        }
+
+        public TracingMiddlewareOptions ForKey(string key, Action<string> traceAction)
+        {
+            keyTracers.Add(key, value => traceAction(value));
             return this;
         }
 
         public TracingMiddlewareOptions Ignore<T>()
         {
-            _ignoreTypes.Add(typeof(T));
+            ignoreTypes.Add(typeof (T));
             return this;
         }
 
         public TracingMiddlewareOptions Ignore(string key)
         {
-            _ignoreKeys.Add(key);
+            ignoreKeys.Add(key);
             return this;
         }
 
         public TracingMiddlewareOptions Ignore(Predicate<string> keyPredicate)
         {
-            _ignoreKeyPredicates.Add(keyPredicate);
+            ignoreKeyPredicates.Add(keyPredicate);
             return this;
         }
 
         public TracingMiddlewareOptions Include<T>()
         {
-            _includeTypes.Add(typeof(T));
+            includeTypes.Add(typeof (T));
             return this;
         }
 
         public TracingMiddlewareOptions Include(string key)
         {
-            _includeKeys.Add(key);
+            includeKeys.Add(key);
             return this;
         }
 
         public TracingMiddlewareOptions Include(Predicate<string> keyPredicate)
         {
-            _includeKeyPredicates.Add(keyPredicate);
+            includeKeyPredicates.Add(keyPredicate);
             return this;
         }
 
         public TypeFormat GetFormatter(string key, Type type)
         {
-            if (_ignoreKeys.Contains(key) && !_includeKeys.Contains(key))
+            if (ignoreKeys.Contains(key) && !includeKeys.Contains(key))
             {
                 return null;
             }
-            if(_shouldIgnoreTypeCache.GetOrAdd(type, t => 
-                _ignoreTypes.Any(ignoreType => ignoreType.IsAssignableFrom(t)) && !_includeTypes.Any(includeType => type.IsAssignableFrom(t))))
+            if (shouldIgnoreTypeCache.GetOrAdd(type, t =>
+                ignoreTypes.Any(ignoreType => ignoreType.IsAssignableFrom(t)) &&
+                !includeTypes.Any(includeType => type.IsAssignableFrom(t))))
             {
                 return null;
             }
-            if(_shouldIgnoreKeyCache.GetOrAdd(key, k => 
-                _ignoreKeyPredicates.Any(predicate => predicate(k)) && !_includeKeyPredicates.Any(predicate => predicate(k))))
+            if (shouldIgnoreKeyCache.GetOrAdd(key, k =>
+                ignoreKeyPredicates.Any(predicate => predicate(k)) &&
+                !includeKeyPredicates.Any(predicate => predicate(k))))
             {
                 return null;
             }
 
-            return _typeFormattersCache.GetOrAdd(type, t =>
+            return typeFormattersCache.GetOrAdd(type, t =>
             {
                 TypeFormat typeFormat;
-                if (!_typeFormatters.TryGetValue(type, out typeFormat))
+                if (!typeFormatters.TryGetValue(type, out typeFormat))
                 {
-                    var typeFormatKvp = _typeFormatters.FirstOrDefault(kvp => kvp.Key.IsAssignableFrom(type));
-                    typeFormat = default(KeyValuePair<Type, TypeFormat>).Equals(typeFormatKvp) ?_defaultTypeFormat : typeFormatKvp.Value;
+                    KeyValuePair<Type, TypeFormat> typeFormatKvp =
+                        typeFormatters.FirstOrDefault(kvp => kvp.Key.IsAssignableFrom(type));
+                    typeFormat = default(KeyValuePair<Type, TypeFormat>).Equals(typeFormatKvp)
+                        ? defaultTypeFormat
+                        : typeFormatKvp.Value;
                 }
                 return value => value == null ? "{null}" : typeFormat(value);
             });
+        }
+
+        public Trace GetTrace(string key)
+        {
+            if (!keyTracers.ContainsKey(key))
+            {
+                return Trace;
+            }
+
+            return keyTracers[key];
         }
     }
 }
