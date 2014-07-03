@@ -28,7 +28,7 @@
         public static MidFunc Tracing(ITracer tracer)
         {
             if (tracer == null) throw new ArgumentNullException("tracer");
-
+            tracer = new SafeTracer(tracer);
             return next => async env =>
             {
                 if (!tracer.IsEnabled)

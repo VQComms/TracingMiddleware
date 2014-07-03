@@ -2,7 +2,6 @@
 {
     using System;
     using System.Collections.Generic;
-    using System.Diagnostics;
     using System.IO;
     using System.Linq;
     using Owin;
@@ -11,48 +10,42 @@
     {
         public void Configuration(IAppBuilder app)
         {
-            //This is all optional you can use it without options and a defaultinterpreter will write to console
-            var options = TracingMiddlewareOptions.Default
-                .Ignore(key => key.StartsWith(""))
-                .Include(key => key.StartsWith("owin."))
-
-                .Ignore<Stream>();
-
-            Func<IDictionary<string, object>, bool> internalfilter = environment =>
+            //You can use defaultoptions
+            var defaultOptions = TracingMiddlewareOptions.Default;
+            
+            //You can use custom options
+            Func<IDictionary<string, object>, bool> internalexceptionfilter = environment =>
             {
-                var owinkvp = environment.FirstOrDefault(x => x.Key == "owin.ResponseStatusCode" && (int) x.Value == 500);
+                var owinkvp = environment.FirstOrDefault(x => x.Key == "owin.ResponseStatusCode" && (int)x.Value == 500);
                 return !owinkvp.Equals(default(KeyValuePair<string, object>));
             };
 
-            var filters = new[] {internalfilter };
+            var filters = new[] { internalexceptionfilter };
 
             var otheroptions =
-                new TracingMiddlewareOptions(Trace, MessageFormat, DefaultTypeFormat, filters, IsEnabled).ForKey(
-                    "owin.ResponseStatusCode", s => Debug.WriteLine(s));
+                new TracingMiddlewareOptions(
+                    TracingMiddlewareOptions.DefaultTrace, //Console.WriteLine or overwrite with own trace handler
+                    MessageFormat,
+                    TracingMiddlewareOptions.DefaultTypeFormat, //object.ToString()
+                    filters)
+                    .ForType<IDictionary<string, string[]>>(
+                        headers => string.Join(",",
+                            headers.Select(
+                                header => string.Format("[{0}:{1}]", header.Key, string.Join(",", header.Value))))) //Make nice with OWIN headers
+                    .ForKey("owin.ResponseStatusCode", value => Console.WriteLine("*****" + value + "*****")) //Display status code differently
+                    .Ignore<Stream>() //Ignore OWIN keys that are Stream types
+                    .Ignore(key => key.StartsWith("")) //Ignore blank keys
+                    .Include(key => key.StartsWith("owin.")); //Trace only keys that start with OWIN
 
+            //Pass to your App
             app
                 .Use(TracingMiddleware.Tracing(otheroptions))
                 .UseNancy();
         }
 
-        private bool IsEnabled()
-        {
-            return true;
-        }
-
-        private string DefaultTypeFormat(object value)
-        {
-            return value.ToString();
-        }
-
         private string MessageFormat(string key, string value)
         {
             return "Key : " + key + " Value : " + value;
-        }
-
-        private void Trace(string message)
-        {
-            Console.WriteLine(message);
         }
     }
 }

@@ -20,7 +20,7 @@
             (key, value) => string.Format("{0} : {1}", key, value);
 
         public static readonly TypeFormat DefaultTypeFormat = value => value.ToString();
-        public static readonly Trace ConsoleTrace = Console.WriteLine;
+        public static readonly Trace DefaultTrace = Console.WriteLine;
         public static readonly TracingMiddlewareOptions Default;
         public static readonly IEnumerable<Func<IDictionary<string, object>, bool>> DefaultTracingFilters = Enumerable.Empty<Func<IDictionary<string, object>, bool>>(); 
         private readonly TypeFormat defaultTypeFormat;
@@ -72,7 +72,7 @@
         }
 
         public TracingMiddlewareOptions(Func<bool> isEnabled = null)
-            : this(ConsoleTrace, DefaultMessageFormat, DefaultTypeFormat, DefaultTracingFilters,isEnabled)
+            : this(DefaultTrace, DefaultMessageFormat, DefaultTypeFormat, DefaultTracingFilters,isEnabled)
         {
         }
 
