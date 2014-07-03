@@ -1,0 +1,25 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+    <metadata>
+        <id>TracingMiddleware</id>
+        <version>1.0.0</version>
+        <title>TracingMiddleware</title>
+        <authors>VQComms</authors>
+        <owners>VQComms</owners>
+        <licenseUrl>https://github.com/VQComms/TracingMiddleware/blob/master/LICENSE</licenseUrl>
+        <projectUrl>https://github.com/VQComms/TracingMiddleware</projectUrl>
+        <requireLicenseAcceptance>false</requireLicenseAcceptance>
+        <description>Enable tracing to log entries in the OWIN pipeline.  
+
+OWIN Keys/Types can be included/ignored. 
+
+Log format, type format, log action can be globally set whilst type format and log actions can be set individually for each type and key.
+
+Enables granular OWIN pipeline logging</description>
+        <summary>Enable tracing to log entries in the OWIN pipeline</summary>
+        <tags>owin,logging,tracing,diagnostics</tags>
+    </metadata>
+    <files>
+        <file src="src\TracingMiddleware\bin\Release\TracingMiddleware.dll" target="lib\net45\TracingMiddleware.dll" />
+    </files>
+</package>
