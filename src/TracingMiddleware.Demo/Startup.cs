@@ -39,7 +39,7 @@
 
             //Pass to your App
             app
-                .Use(TracingMiddleware.Tracing(otheroptions))
+                .Use(TracingMiddleware.Tracing(defaultOptions))
                 .UseNancy();
         }
 
