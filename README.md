@@ -23,7 +23,7 @@ public void Configuration(IAppBuilder app)
 
 The above produces:
 
-![Default Output](https://github.com/VQComms/TracingMiddleware/blob/master/defaulttracing.png)
+![Default Output](https://raw.githubusercontent.com/VQComms/TracingMiddleware/master/defaulttracing.png)
 
 ##Custom Usage
 
