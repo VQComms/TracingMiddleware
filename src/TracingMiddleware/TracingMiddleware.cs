@@ -2,7 +2,8 @@
 {
     using System;
     using System.Diagnostics;
-    using System.Linq;
+
+    using AppFunc = System.Func<System.Collections.Generic.IDictionary<string, object>, System.Threading.Tasks.Task>;
 
     using MidFunc = System.Func<
        System.Func<System.Collections.Generic.IDictionary<string, object>, System.Threading.Tasks.Task>,
@@ -11,41 +12,41 @@
 
     public static class TracingMiddleware
     {
-        public static MidFunc Tracing(TracingMiddlewareOptions tracingMiddlewareOptions = null)
+        public static MidFunc Tracing(TracingMiddlewareOptions options = null)
         {
-            tracingMiddlewareOptions = tracingMiddlewareOptions ?? new TracingMiddlewareOptions();
-            return
-                next =>
-                    async environment =>
-                    {
-                        var stopWatch = new Stopwatch();
-                        tracingMiddlewareOptions.Interpreter.Interpret("Request Start", "");
+            options = options ?? TracingMiddlewareOptions.Default;
+            return Tracing(() => options);
+        }
 
-                        var requestItems =
-                            environment.Where(x => x.Key.StartsWith("owin.request", StringComparison.OrdinalIgnoreCase));
+        public static MidFunc Tracing(Func<TracingMiddlewareOptions> getOptions)
+        {
+            if (getOptions == null) throw new ArgumentNullException("getOptions");
 
-                        foreach (var item in requestItems)
-                        {
-                            tracingMiddlewareOptions.Interpreter.Interpret(item.Key, item.Value);
-                        }
+            return Tracing(new TracingMiddlewareOptionsTracer(getOptions));
+        }
+        
+        public static MidFunc Tracing(ITracer tracer)
+        {
+            if (tracer == null) throw new ArgumentNullException("tracer");
 
-                        stopWatch.Start();
+            tracer = new SafeTracer(tracer);
+            
+            MidFunc traceRequest = next => async env =>
+            {
+                tracer.Trace("Request Start");
+                var stopWatch = Stopwatch.StartNew();
+                await next(env);
+                stopWatch.Stop();
 
-                        await next(environment);
+                foreach (var item in env)
+                {
+                    tracer.Trace(item.Key, item.Value);
+                }
 
-                        stopWatch.Stop();
+                tracer.Trace(string.Format("Request completed in {0} ms", stopWatch.ElapsedMilliseconds));
+            };
 
-                        var responseItems =
-                            environment.Where(x => !x.Key.StartsWith("owin.request", StringComparison.OrdinalIgnoreCase));
-
-                        foreach (var item in responseItems)
-                        {
-                            tracingMiddlewareOptions.Interpreter.Interpret(item.Key, item.Value);
-                        }
-
-                        tracingMiddlewareOptions.Interpreter.Interpret("Request Finished", "");
-                        tracingMiddlewareOptions.Interpreter.Interpret("Execution Time", stopWatch.ElapsedMilliseconds);
-                    };
+            return next => env => tracer.IsEnabled ? traceRequest(next)(env) : next(env);
         }
     }
 }
