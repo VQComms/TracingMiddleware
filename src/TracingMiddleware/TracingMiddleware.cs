@@ -31,25 +31,30 @@
 
             tracer = new SafeTracer(tracer);
 
-            MidFunc traceRequest = next => async env =>
+            return next => async env =>
             {
-                tracer.Trace("Request Start");
-                var stopWatch = Stopwatch.StartNew();
-                await next(env);
-                stopWatch.Stop();
-
-                if (tracer.Filters.All(filter => filter.Invoke(env)))
+                if (!tracer.IsEnabled)
                 {
-                    foreach (var item in env)
-                    {
-                        tracer.Trace(item.Key, item.Value);
-                    }
+                    await next(env);
                 }
+                else
+                {
+                    tracer.Trace("Request Start");
+                    var stopWatch = Stopwatch.StartNew();
+                    await next(env);
+                    stopWatch.Stop();
 
-                tracer.Trace(string.Format("Request completed in {0} ms", stopWatch.ElapsedMilliseconds));
+                    if (tracer.Filters.All(filter => filter.Invoke(env)))
+                    {
+                        foreach (var item in env)
+                        {
+                            tracer.Trace(item.Key, item.Value);
+                        }
+                    }
+
+                    tracer.Trace(string.Format("Request completed in {0} ms", stopWatch.ElapsedMilliseconds));
+                }
             };
-
-            return next => env => tracer.IsEnabled ? traceRequest(next)(env) : next(env);
         }
     }
 }
