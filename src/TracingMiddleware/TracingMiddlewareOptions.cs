@@ -8,7 +8,7 @@
     using System.Linq;
     using System.Threading;
 
-    public delegate void Trace(string message);
+    public delegate void Trace(string requestId, string message);
 
     public delegate string MessageFormat(string key, string value);
 
@@ -20,9 +20,9 @@
             (key, value) => string.Format("{0} : {1}", key, value);
 
         public static readonly TypeFormat DefaultTypeFormat = value => value.ToString();
-        public static readonly Trace DefaultTrace = Console.WriteLine;
+        public static readonly Trace DefaultTrace = (requestId, message) => Console.WriteLine(requestId + " : " + message);
         public static readonly TracingMiddlewareOptions Default;
-        public static readonly IEnumerable<Func<IDictionary<string, object>, bool>> DefaultTracingFilters = Enumerable.Empty<Func<IDictionary<string, object>, bool>>(); 
+        public static readonly IEnumerable<Func<IDictionary<string, object>, bool>> DefaultTracingFilters = Enumerable.Empty<Func<IDictionary<string, object>, bool>>();
         private readonly TypeFormat defaultTypeFormat;
         private readonly List<Predicate<string>> ignoreKeyPredicates = new List<Predicate<string>>();
         private readonly HashSet<string> ignoreKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -33,7 +33,7 @@
         private readonly Func<bool> isEnabled;
         private readonly Dictionary<string, Trace> keyTracers = new Dictionary<string, Trace>();
         private readonly MessageFormat messageFormat;
-        private readonly IEnumerable<Func<IDictionary<string, object>, bool>> filters; 
+        private readonly IEnumerable<Func<IDictionary<string, object>, bool>> filters;
 
 
         private readonly ConcurrentDictionary<string, bool> shouldIgnoreKeyCache =
@@ -72,22 +72,22 @@
         }
 
         public TracingMiddlewareOptions(Func<bool> isEnabled = null)
-            : this(DefaultTrace, DefaultMessageFormat, DefaultTypeFormat, DefaultTracingFilters,isEnabled)
+            : this(DefaultTrace, DefaultMessageFormat, DefaultTypeFormat, DefaultTracingFilters, isEnabled)
         {
         }
 
         public TracingMiddlewareOptions(Trace trace, Func<bool> isEnabled = null)
-            : this(trace, DefaultMessageFormat, DefaultTypeFormat, DefaultTracingFilters,isEnabled )
+            : this(trace, DefaultMessageFormat, DefaultTypeFormat, DefaultTracingFilters, isEnabled)
         {
         }
 
         public TracingMiddlewareOptions(Trace trace, MessageFormat messageFormat, Func<bool> isEnabled = null)
-            : this(trace, messageFormat, DefaultTypeFormat, DefaultTracingFilters,isEnabled)
+            : this(trace, messageFormat, DefaultTypeFormat, DefaultTracingFilters, isEnabled)
         {
         }
 
         public TracingMiddlewareOptions(Trace trace, TypeFormat defaultTypeformat, Func<bool> isEnabled = null)
-            : this(trace, DefaultMessageFormat, defaultTypeformat, DefaultTracingFilters,isEnabled)
+            : this(trace, DefaultMessageFormat, defaultTypeformat, DefaultTracingFilters, isEnabled)
         {
         }
 
@@ -126,25 +126,25 @@
 
         public TracingMiddlewareOptions ForType<T>(Func<T, string> format)
         {
-            typeFormatters.Add(typeof (T), value => format((T) value));
+            typeFormatters.Add(typeof(T), value => format((T)value));
             return this;
         }
 
         public TracingMiddlewareOptions ForType<T>(IFormatProvider formatProvider, string format)
         {
-            typeFormatters.Add(typeof (T), value => string.Format(formatProvider, format, value));
+            typeFormatters.Add(typeof(T), value => string.Format(formatProvider, format, value));
             return this;
         }
 
-        public TracingMiddlewareOptions ForKey(string key, Action<string> traceAction)
+        public TracingMiddlewareOptions ForKey(string key, Action<string, string> traceAction)
         {
-            keyTracers.Add(key, value => traceAction(value));
+            keyTracers.Add(key, (requestId, value) => traceAction(requestId, value));
             return this;
         }
 
         public TracingMiddlewareOptions Ignore<T>()
         {
-            ignoreTypes.Add(typeof (T));
+            ignoreTypes.Add(typeof(T));
             return this;
         }
 
@@ -162,7 +162,7 @@
 
         public TracingMiddlewareOptions Include<T>()
         {
-            includeTypes.Add(typeof (T));
+            includeTypes.Add(typeof(T));
             return this;
         }
 

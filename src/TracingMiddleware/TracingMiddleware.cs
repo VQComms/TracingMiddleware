@@ -37,7 +37,18 @@
                 }
                 else
                 {
-                    tracer.Trace("Request Start");
+                    string requestId;
+                    if (env.ContainsKey("owin.RequestId"))
+                    {
+                        requestId = env["owin.RequestId"].ToString();
+                    }
+                    else
+                    {
+                        requestId = Guid.NewGuid().ToString();
+                        env["owin.RequestId"] = requestId;
+                    }
+
+                    tracer.Trace(requestId, "Request Start");
                     var stopWatch = Stopwatch.StartNew();
                     await next(env);
                     stopWatch.Stop();
@@ -46,11 +57,11 @@
                     {
                         foreach (var item in env)
                         {
-                            tracer.Trace(item.Key, item.Value);
+                            tracer.Trace(requestId, item.Key, item.Value);
                         }
                     }
 
-                    tracer.Trace(string.Format("Request completed in {0} ms", stopWatch.ElapsedMilliseconds));
+                    tracer.Trace(requestId, string.Format("Request completed in {0} ms", stopWatch.ElapsedMilliseconds));
                 }
             };
         }

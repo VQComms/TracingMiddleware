@@ -9,8 +9,8 @@
 
         bool IsEnabled { get; }
 
-        void Trace(string message);
+        void Trace(string requestId,string message);
 
-        void Trace(string key, object value);
+        void Trace(string requestId, string key, object value);
     }
 }

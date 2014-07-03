@@ -32,7 +32,7 @@
                         headers => string.Join(",",
                             headers.Select(
                                 header => string.Format("[{0}:{1}]", header.Key, string.Join(",", header.Value))))) //Make nice with OWIN headers
-                    .ForKey("owin.ResponseStatusCode", value => Console.WriteLine("*****" + value + "*****")) //Display status code differently
+                    .ForKey("owin.ResponseStatusCode", (requestId,value) => Console.WriteLine(requestId + " : *****" + value + "*****")) //Display status code differently
                     .Ignore<Stream>() //Ignore OWIN keys that are Stream types
                     .Ignore(key => key.StartsWith("")) //Ignore blank keys
                     .Include(key => key.StartsWith("owin.")); //Trace only keys that start with OWIN

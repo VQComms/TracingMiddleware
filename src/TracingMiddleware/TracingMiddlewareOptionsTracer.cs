@@ -22,12 +22,12 @@ namespace TracingMiddleware
             get { return getOptions().Filters; }
         }
 
-        public void Trace(string message)
+        public void Trace(string requestId, string message)
         {
-            getOptions().Trace(message);
+            getOptions().Trace(requestId,message);
         }
 
-        public void Trace(string key, object value)
+        public void Trace(string requestId, string key, object value)
         {
             if (value == null)
             {
@@ -43,7 +43,7 @@ namespace TracingMiddleware
 
             var trace = options.GetTrace(key);
 
-            trace(options.MessageFormat(key, typeFormat(value)));
+            trace(requestId,options.MessageFormat(key, typeFormat(value)));
         }
     }
 }

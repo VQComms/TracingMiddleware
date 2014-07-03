@@ -22,20 +22,20 @@
             get { return inner.IsEnabled; }
         }
 
-        public void Trace(string message)
+        public void Trace(string requestId, string message)
         {
             try
             {
-                inner.Trace(message);
+                inner.Trace(requestId, message);
             }
             catch { }
         }
 
-        public void Trace(string key, object value)
+        public void Trace(string requestId, string key, object value)
         {
             try
             {
-                inner.Trace(key, value);
+                inner.Trace(requestId, key, value);
             }
             catch { }
         }
