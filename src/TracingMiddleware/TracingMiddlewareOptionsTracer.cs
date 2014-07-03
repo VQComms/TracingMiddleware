@@ -29,6 +29,11 @@ namespace TracingMiddleware
 
         public void Trace(string key, object value)
         {
+            if (value == null)
+            {
+                return;
+            }
+
             TypeFormat typeFormat = getOptions().GetFormatter(key, value.GetType());
             if (typeFormat == null)
             {
