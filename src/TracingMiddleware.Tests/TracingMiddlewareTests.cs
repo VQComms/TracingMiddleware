@@ -2,16 +2,16 @@
 {
     using System;
     using System.Collections.Generic;
+    using MidFunc = System.Func<
+      System.Func<System.Collections.Generic.IDictionary<string, object>, System.Threading.Tasks.Task>,
+      System.Func<System.Collections.Generic.IDictionary<string, object>, System.Threading.Tasks.Task>
+      >;
     using System.Linq;
     using System.Threading.Tasks;
     using Xunit;
 
     using AppFunc = System.Func<System.Collections.Generic.IDictionary<string, object>, System.Threading.Tasks.Task>;
 
-    using MidFunc = System.Func<
-      System.Func<System.Collections.Generic.IDictionary<string, object>, System.Threading.Tasks.Task>,
-      System.Func<System.Collections.Generic.IDictionary<string, object>, System.Threading.Tasks.Task>
-      >;
 
     public class TracingMiddlewareTests
     {
