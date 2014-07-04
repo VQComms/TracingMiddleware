@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
     <metadata>
         <id>TracingMiddleware</id>
-        <version>1.0.1</version>
+        <version>1.0.2</version>
         <title>TracingMiddleware</title>
         <authors>VQComms</authors>
         <owners>VQComms</owners>
@@ -13,14 +13,17 @@
 
 OWIN Keys/Types can be included/ignored. 
 
+Filters can be supplied so tracing occurs when all filter conditions are matched.
+
 Log format, type format, log action can be globally set whilst type format and log actions can be set individually for each type and key.
 
-Enables granular OWIN pipeline logging</description>
+Enables granular OWIN pipeline logging.</description>
         <summary>Enable tracing to log entries in the OWIN pipeline</summary>
-        <releaseNotes>v1.0.1 - Added ability to add filters on Default options</releaseNotes>
+        <releaseNotes>v1.0.2 - Added tracing for exceptions thrown by middleware
+v1.0.1 - Added ability to add filters on Default options</releaseNotes>
         <tags>owin,logging,tracing,diagnostics</tags>
     </metadata>
     <files>
-        <file src="src\TracingMiddleware\bin\Release\TracingMiddleware.dll" target="lib\net45\TracingMiddleware.dll" />
+        <file src="lib\net45\TracingMiddleware.dll" target="lib\net45\TracingMiddleware.dll" />
     </files>
 </package>
