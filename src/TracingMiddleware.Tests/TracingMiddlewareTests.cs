@@ -135,6 +135,40 @@
             Assert.True(requestList.Any(x => x.StartsWith("Request completed")));
         }
 
+        [Fact]
+        public async Task Should_Not_Log_If_Filter_Conditions_Not_Met()
+        {
+            //Given
+            var requestList = new List<string>();
+
+            Action<string, string> traceAction = (key, value) =>
+            {
+                requestList.Add(value);
+            };
+
+            var options = GetTracingMiddlewareOptions(traceAction);
+
+            Func<IDictionary<string, object>, bool> internalexceptionfilter = environment =>
+            {
+                var owinkvp = environment.FirstOrDefault(x => x.Key == "owin.ResponseStatusCode" && (int)x.Value == 500);
+                return !owinkvp.Equals(default(KeyValuePair<string, object>));
+            };
+
+            options.AddFilter(internalexceptionfilter);
+
+            var next = GetNextFuncWithOwinResponseKeys();
+
+            var tracingpipeline = CreateTracingOwinPipeline(next, options);
+
+            var owinenvironment = GetEnvironment();
+
+            //When
+            await tracingpipeline(owinenvironment);
+
+            //Then
+            Assert.Equal(2, requestList.Count);
+        }
+
         private Dictionary<string, object> GetEnvironment()
         {
             var environment = new Dictionary<string, object>

@@ -37,9 +37,11 @@
                     .Ignore(key => key.StartsWith("")) //Ignore blank keys
                     .Include(key => key.StartsWith("owin.")); //Trace only keys that start with OWIN
 
+            var alt = TracingMiddlewareOptions.Default.AddFilter(internalexceptionfilter);
+
             //Pass to your App
             app
-                .Use(TracingMiddleware.Tracing(defaultOptions))
+                .Use(TracingMiddleware.Tracing(alt))
                 .UseNancy();
         }
 

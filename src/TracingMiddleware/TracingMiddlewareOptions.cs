@@ -33,7 +33,7 @@
         private readonly Func<bool> isEnabled;
         private readonly Dictionary<string, Trace> keyTracers = new Dictionary<string, Trace>();
         private readonly MessageFormat messageFormat;
-        private readonly IEnumerable<Func<IDictionary<string, object>, bool>> filters;
+        private readonly List<Func<IDictionary<string, object>, bool>> filters = new List<Func<IDictionary<string, object>, bool>>();
 
 
         private readonly ConcurrentDictionary<string, bool> shouldIgnoreKeyCache =
@@ -101,7 +101,7 @@
             this.messageFormat = messageFormat;
             this.defaultTypeFormat = defaultTypeFormat;
             this.isEnabled = isEnabled ?? (() => true);
-            this.filters = filters;
+            this.filters.AddRange(filters);
         }
 
         public Trace Trace
@@ -175,6 +175,12 @@
         public TracingMiddlewareOptions Include(Predicate<string> keyPredicate)
         {
             includeKeyPredicates.Add(keyPredicate);
+            return this;
+        }
+
+        public TracingMiddlewareOptions AddFilter(Func<IDictionary<string, object>, bool> filter)
+        {
+            this.filters.Add(filter);
             return this;
         }
 
