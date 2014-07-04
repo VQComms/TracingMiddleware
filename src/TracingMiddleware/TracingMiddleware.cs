@@ -50,18 +50,29 @@
 
                     tracer.Trace(requestId, "Request Start");
                     var stopWatch = Stopwatch.StartNew();
-                    await next(env);
-                    stopWatch.Stop();
-
-                    if (tracer.Filters.All(filter => filter.Invoke(env)))
+                    try
                     {
-                        foreach (var item in env)
-                        {
-                            tracer.Trace(requestId, item.Key, item.Value);
-                        }
+                        await next(env);
                     }
+                    catch (Exception exception)
+                    {
+                        tracer.Trace(requestId, exception.Message);
+                        throw;
+                    }
+                    finally
+                    {
+                        stopWatch.Stop();
 
-                    tracer.Trace(requestId, string.Format("Request completed in {0} ms", stopWatch.ElapsedMilliseconds));
+                        if (tracer.Filters.All(filter => filter.Invoke(env)))
+                        {
+                            foreach (var item in env)
+                            {
+                                tracer.Trace(requestId, item.Key, item.Value);
+                            }
+                        }
+
+                        tracer.Trace(requestId, string.Format("Request completed in {0} ms", stopWatch.ElapsedMilliseconds));
+                    }
                 }
             };
         }

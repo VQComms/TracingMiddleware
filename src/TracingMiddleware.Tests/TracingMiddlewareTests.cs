@@ -169,6 +169,46 @@
             Assert.Equal(2, requestList.Count);
         }
 
+        [Fact]
+        public async Task Should_Log_Exceptions()
+        {
+            //Given
+            var requestList = new List<string>();
+
+            Action<string, string> traceAction = (key, value) =>
+            {
+                requestList.Add(value);
+            };
+
+            var options = GetTracingMiddlewareOptions(traceAction);
+
+            var next = GetNextFuncThatThrows();
+
+            var tracingpipeline = CreateTracingOwinPipeline(next, options);
+
+            var owinenvironment = GetEnvironment();
+
+            //When
+            try
+            {
+                await tracingpipeline(owinenvironment);
+            }
+            catch (Exception)
+            {
+            }
+
+            //Then
+            Assert.True(requestList.Any(x => x == "my app broke"));
+        }
+
+        private AppFunc GetNextFuncThatThrows()
+        {
+            return env =>
+            {
+                throw new Exception("my app broke");
+            };
+        }
+
         private Dictionary<string, object> GetEnvironment()
         {
             var environment = new Dictionary<string, object>
