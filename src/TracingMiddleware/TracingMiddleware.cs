@@ -20,14 +20,16 @@
 
         public static MidFunc Tracing(Func<TracingMiddlewareOptions> getOptions)
         {
-            if (getOptions == null) throw new ArgumentNullException("getOptions");
+            if (getOptions == null)
+                throw new ArgumentNullException("getOptions");
 
             return Tracing(new TracingMiddlewareOptionsTracer(getOptions));
         }
 
         public static MidFunc Tracing(ITracer tracer)
         {
-            if (tracer == null) throw new ArgumentNullException("tracer");
+            if (tracer == null)
+                throw new ArgumentNullException("tracer");
             tracer = new SafeTracer(tracer);
             return next => async env =>
             {
@@ -47,8 +49,8 @@
                         requestId = Guid.NewGuid().ToString();
                         env["owin.RequestId"] = requestId;
                     }
-
-                    tracer.Trace(requestId, "Request Start");
+                    var path = env["owin.RequestPath"];
+                    tracer.Trace(requestId, "Request Start: " + path);
                     var stopWatch = Stopwatch.StartNew();
                     try
                     {
@@ -71,7 +73,7 @@
                             }
                         }
 
-                        tracer.Trace(requestId, string.Format("Request completed in {0} ms", stopWatch.ElapsedMilliseconds));
+                        tracer.Trace(requestId, string.Format("Request completed in {0} ms for path {1}", stopWatch.ElapsedMilliseconds, path));
                     }
                 }
             };

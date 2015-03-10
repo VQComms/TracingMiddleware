@@ -44,6 +44,38 @@
         }
 
         [Fact]
+        public async Task Should_Log_Incoming_Request_Path()
+        {
+            //Given
+            var logged = false;
+            var requestList = new List<string>();
+
+            Action<string, string> traceAction = (key, value) =>
+            {
+                logged = true;
+                requestList.Add(value);
+            };
+
+            var options = GetTracingMiddlewareOptions(traceAction);
+
+
+            var tracingpipeline = CreateTracingOwinPipeline(GetNextFunc(), options);
+
+            var environment = new Dictionary<string, object>
+            {
+                { "owin.RequestHeaders", new Dictionary<string, string[]>() { { "Accept", new[] { "application/json" } } } },
+                { "owin.RequestPath", "/some/place?q=nice" }
+            };
+
+            //When
+            await tracingpipeline(environment);
+
+            //Then
+            Assert.True(logged);
+            Assert.Equal("Request Start: /some/place?q=nice", requestList.First());   //Add 2 to env above, middleware adds requestid, and middleware logs start/stop
+        }
+
+        [Fact]
         public async Task Should_Log_Response_Keys()
         {
             //Given
@@ -213,8 +245,8 @@
         {
             var environment = new Dictionary<string, object>
             {
-                {"owin.RequestHeaders", new Dictionary<string, string[]>() {{"Accept", new[] {"application/json"}}}},
-                {"owin.RequestPath", "/"}
+                { "owin.RequestHeaders", new Dictionary<string, string[]>() { { "Accept", new[] { "application/json" } } } },
+                { "owin.RequestPath", "/" }
             };
             return environment;
         }
