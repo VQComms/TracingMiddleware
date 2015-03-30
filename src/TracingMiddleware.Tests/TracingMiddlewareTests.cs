@@ -44,6 +44,37 @@
         }
 
         [Fact]
+        public async Task Should_Create_RequestId_If_Environment_Key_Doesnt_Exist_Or_Empty()
+        {
+            //Given
+            var logged = false;
+            var requestList = new Dictionary<string,string>();
+
+            Action<string, string> traceAction = (key, value) =>
+            {
+                logged = true;
+                requestList.Add(key, value);
+            };
+
+            var options = GetTracingMiddlewareOptions(traceAction);
+
+
+            var tracingpipeline = CreateTracingOwinPipeline(GetNextFunc(), options);
+
+            var environment = GetEnvironment();
+            environment.Add("owin.RequestId", Guid.Empty.ToString());
+
+            //When
+            await tracingpipeline(environment);
+
+            var loggedItem = Guid.Parse(requestList.First().Key);
+
+            //Then
+            Assert.True(logged);
+            Assert.True(loggedItem != Guid.Empty);
+        }
+
+        [Fact]
         public async Task Should_Log_Incoming_Request_Path()
         {
             //Given
