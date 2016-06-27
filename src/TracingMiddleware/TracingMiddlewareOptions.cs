@@ -7,6 +7,7 @@
     using System.IO;
     using System.Linq;
     using System.Threading;
+    using System.Reflection;
 
     public delegate void Trace(string requestId, string message);
 
@@ -191,8 +192,8 @@
                 return null;
             }
             if (shouldIgnoreTypeCache.GetOrAdd(type, t =>
-                ignoreTypes.Any(ignoreType => ignoreType.IsAssignableFrom(t)) &&
-                !includeTypes.Any(includeType => type.IsAssignableFrom(t))))
+                ignoreTypes.Any(ignoreType => ignoreType.GetTypeInfo().IsAssignableFrom(t)) &&
+                !includeTypes.Any(includeType => type.GetTypeInfo().IsAssignableFrom(t))))
             {
                 return null;
             }
@@ -209,7 +210,7 @@
                 if (!typeFormatters.TryGetValue(type, out typeFormat))
                 {
                     KeyValuePair<Type, TypeFormat> typeFormatKvp =
-                        typeFormatters.FirstOrDefault(kvp => kvp.Key.IsAssignableFrom(type));
+                        typeFormatters.FirstOrDefault(kvp => kvp.Key.GetTypeInfo().IsAssignableFrom(type));
                     typeFormat = default(KeyValuePair<Type, TypeFormat>).Equals(typeFormatKvp)
                         ? defaultTypeFormat
                         : typeFormatKvp.Value;
