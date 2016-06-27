@@ -1,20 +1,19 @@
 ﻿namespace TracingMiddleware.Demo
 {
-    using System;
-    using Microsoft.Owin.Hosting;
+    using Microsoft.AspNetCore.Hosting;
+    using System.IO;
 
     class Program
     {
         static void Main(string[] args)
         {
-            var url = "http://+:8080";
+            var host = new WebHostBuilder()
+                 .UseContentRoot(Directory.GetCurrentDirectory())
+                 .UseKestrel()
+                 .UseStartup<Startup>()
+                 .Build();
 
-            using (WebApp.Start<Startup>(url))
-            {
-                Console.WriteLine("Running on {0}", url);
-                Console.WriteLine("Press enter to exit");
-                Console.ReadLine();
-            }
+            host.Run();
         }
     }
 }

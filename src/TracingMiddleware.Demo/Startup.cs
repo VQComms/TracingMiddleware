@@ -5,10 +5,12 @@
     using System.IO;
     using System.Linq;
     using Owin;
+    using Microsoft.AspNetCore.Builder;
+    using Nancy.Owin;
 
     public class Startup
     {
-        public void Configuration(IAppBuilder app)
+        public void Configure(IApplicationBuilder app)
         {
             //You can use defaultoptions
             var defaultOptions = TracingMiddlewareOptions.Default;
@@ -16,7 +18,7 @@
             //You can use custom options
             Func<IDictionary<string, object>, bool> internalexceptionfilter = environment =>
             {
-                var owinkvp = environment.FirstOrDefault(x => x.Key == "owin.ResponseStatusCode" && (int)x.Value == 500);
+                var owinkvp = environment.FirstOrDefault(x => x.Key == "owin.ResponseStatusCode" && ((int)x.Value == 500 || (int)x.Value == 404));
                 return !owinkvp.Equals(default(KeyValuePair<string, object>));
             };
 
@@ -40,9 +42,11 @@
             var alt = TracingMiddlewareOptions.Default.AddFilter(internalexceptionfilter);
 
             //Pass to your App
-            app
-                .Use(TracingMiddleware.Tracing(alt))
-                .UseNancy();
+            app.UseOwin(x =>
+            {
+                x.Invoke(TracingMiddleware.Tracing(alt));
+                x.UseNancy();
+            });
         }
 
         private string MessageFormat(string key, string value)
