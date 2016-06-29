@@ -35,7 +35,7 @@
             {
                 if (!tracer.IsEnabled)
                 {
-                    await next(env);
+                    await next(env).ConfigureAwait(false);
                 }
                 else
                 {
@@ -54,7 +54,7 @@
                     var stopWatch = Stopwatch.StartNew();
                     try
                     {
-                        await next(env);
+                        await next(env).ConfigureAwait(false);
                     }
                     catch (Exception exception)
                     {
