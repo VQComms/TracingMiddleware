@@ -40,9 +40,17 @@
                 else
                 {
                     string requestId;
-                    if (env.ContainsKey("owin.RequestId") && Guid.Parse(env["owin.RequestId"].ToString()) != Guid.Empty)
+                    if (env.ContainsKey("owin.RequestId"))
                     {
-                        requestId = env["owin.RequestId"].ToString();
+                        Guid result;
+                        if (Guid.TryParse(env["owin.RequestId"].ToString(), out result) && result != Guid.Empty)
+                        {
+                           requestId = result.ToString();   
+                        }
+                        else
+                        {
+                           requestId = Guid.NewGuid().ToString();   
+                        }
                     }
                     else
                     {
