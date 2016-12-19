@@ -189,3 +189,5 @@ FakesAssemblies/
 
 *.lock.json
 *.vs
+
+.idea/

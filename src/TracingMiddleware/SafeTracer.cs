@@ -2,6 +2,7 @@
 {
     using System;
     using System.Collections.Generic;
+    using Microsoft.AspNetCore.Http;
 
     internal class SafeTracer : ITracer
     {
@@ -12,7 +13,7 @@
             this.inner = inner;
         }
 
-        public IEnumerable<Func<IDictionary<string, object>, bool>> Filters
+        public IEnumerable<Func<HttpContext, bool>> Filters
         {
             get { return inner.Filters; }
         }

@@ -4,8 +4,9 @@
     using System.Collections.Generic;
     using System.IO;
     using System.Linq;
-    using Owin;
+    using System.Security.Claims;
     using Microsoft.AspNetCore.Builder;
+    using Microsoft.AspNetCore.Http;
     using Nancy.Owin;
 
     public class Startup
@@ -16,10 +17,9 @@
             var defaultOptions = TracingMiddlewareOptions.Default;
             
             //You can use custom options
-            Func<IDictionary<string, object>, bool> internalexceptionfilter = environment =>
+            Func<HttpContext, bool> internalexceptionfilter = context =>
             {
-                var owinkvp = environment.FirstOrDefault(x => x.Key == "owin.ResponseStatusCode" && ((int)x.Value == 500 || (int)x.Value == 404));
-                return !owinkvp.Equals(default(KeyValuePair<string, object>));
+                return context.Response.StatusCode == 500 || context.Response.StatusCode == 404;
             };
 
             var filters = new[] { internalexceptionfilter };
@@ -37,14 +37,17 @@
                     .ForKey("owin.ResponseStatusCode", (requestId,value) => Console.WriteLine(requestId + " : *****" + value + "*****")) //Display status code differently
                     .Ignore<Stream>() //Ignore OWIN keys that are Stream types
                     .Ignore(key => key.StartsWith("")) //Ignore blank keys
-                    .Include(key => key.StartsWith("owin.")); //Trace only keys that start with OWIN
+                    .ForType<ClaimsPrincipal>(user=>string.Join(",", user.Claims.Select(x=>x.Type + ":" + x.Value)));
+                    //.Include(key => key.StartsWith("owin.")); //Trace only keys that start with OWIN
 
             var alt = TracingMiddlewareOptions.Default.AddFilter(internalexceptionfilter);
+
+            app.UseTracingMiddleware(otheroptions);
 
             //Pass to your App
             app.UseOwin(x =>
             {
-                x.Invoke(TracingMiddleware.Tracing(alt));
+
                 x.UseNancy();
             });
         }

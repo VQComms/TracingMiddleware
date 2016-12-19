@@ -2,6 +2,7 @@ namespace TracingMiddleware
 {
     using System;
     using System.Collections.Generic;
+    using Microsoft.AspNetCore.Http;
 
     internal class TracingMiddlewareOptionsTracer : ITracer
     {
@@ -17,7 +18,7 @@ namespace TracingMiddleware
             get { return getOptions().IsEnabled; }
         }
 
-        public IEnumerable<Func<IDictionary<string, object>, bool>> Filters
+        public IEnumerable<Func<HttpContext, bool>> Filters
         {
             get { return getOptions().Filters; }
         }

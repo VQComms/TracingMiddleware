@@ -3,88 +3,107 @@
     using System;
     using System.Diagnostics;
     using System.Linq;
-    using AppFunc = System.Func<System.Collections.Generic.IDictionary<string, object>, System.Threading.Tasks.Task>;
+    using System.Threading.Tasks;
+    using Microsoft.AspNetCore.Http;
+    using Microsoft.AspNetCore.Http.Features;
 
-    using MidFunc = System.Func<
-       System.Func<System.Collections.Generic.IDictionary<string, object>, System.Threading.Tasks.Task>,
-       System.Func<System.Collections.Generic.IDictionary<string, object>, System.Threading.Tasks.Task>
-       >;
-
-    public static class TracingMiddleware
+    public class TracingMiddleware
     {
-        public static MidFunc Tracing(TracingMiddlewareOptions options = null)
+        private readonly RequestDelegate nextFunc;
+
+        private readonly TracingMiddlewareOptions options;
+
+        private ITracer tracer;
+
+        public TracingMiddleware(RequestDelegate nextFunc, ITracer tracer)
         {
-            options = options ?? TracingMiddlewareOptions.Default;
-            return Tracing(() => options);
+            this.nextFunc = nextFunc;
+            this.tracer = tracer;
         }
 
-        public static MidFunc Tracing(Func<TracingMiddlewareOptions> getOptions)
+        public async Task Invoke(HttpContext context)
         {
-            if (getOptions == null)
-                throw new ArgumentNullException("getOptions");
-
-            return Tracing(new TracingMiddlewareOptionsTracer(getOptions));
-        }
-
-        public static MidFunc Tracing(ITracer tracer)
-        {
-            if (tracer == null)
-                throw new ArgumentNullException("tracer");
-            tracer = new SafeTracer(tracer);
-            return next => async env =>
+            this.tracer = new SafeTracer(this.tracer);
+            if (!tracer.IsEnabled)
             {
-                if (!tracer.IsEnabled)
+                await this.nextFunc(context).ConfigureAwait(false);
+            }
+            else
+            {
+                string requestId;
+                if (!string.IsNullOrWhiteSpace(context.TraceIdentifier))
                 {
-                    await next(env).ConfigureAwait(false);
+                    requestId = context.TraceIdentifier;
                 }
                 else
                 {
-                    string requestId;
-                    if (env.ContainsKey("owin.RequestId"))
-                    {
-                        Guid result;
-                        if (Guid.TryParse(env["owin.RequestId"].ToString(), out result) && result != Guid.Empty)
-                        {
-                           requestId = result.ToString();   
-                        }
-                        else
-                        {
-                           requestId = Guid.NewGuid().ToString();   
-                        }
-                    }
-                    else
-                    {
-                        requestId = Guid.NewGuid().ToString();
-                        env["owin.RequestId"] = requestId;
-                    }
-                    var path = env["owin.RequestPath"];
-                    tracer.Trace(requestId, "Request Start: " + path);
-                    var stopWatch = Stopwatch.StartNew();
-                    try
-                    {
-                        await next(env).ConfigureAwait(false);
-                    }
-                    catch (Exception exception)
-                    {
-                        tracer.Trace(requestId, exception.Message);
-                        throw;
-                    }
-                    finally
-                    {
-                        stopWatch.Stop();
-
-                        if (tracer.Filters.All(filter => filter.Invoke(env)))
-                        {
-                            foreach (var item in env)
-                            {
-                                tracer.Trace(requestId, item.Key, item.Value);
-                            }
-                        }
-
-                        tracer.Trace(requestId, string.Format("Request completed in {0} ms for path {1}", stopWatch.ElapsedMilliseconds, path));
-                    }
+                    requestId = Guid.NewGuid().ToString();
+                    context.TraceIdentifier = requestId;
                 }
-            };
+
+                var path = context.Request.Path + context.Request.QueryString;
+                tracer.Trace(requestId, "Request Start: " + path);
+
+                var stopWatch = Stopwatch.StartNew();
+
+                try
+                {
+                    await this.nextFunc(context).ConfigureAwait(false);
+                }
+                catch (Exception exception)
+                {
+                    tracer.Trace(requestId, exception.ToString());
+                    throw;
+                }
+                finally
+                {
+                    stopWatch.Stop();
+
+                    if (tracer.Filters.All(filter => filter.Invoke(context)))
+                    {
+                        this.tracer.Trace(requestId, $"Request {nameof(context.Request.Cookies)}", context.Request.Cookies);
+                        this.tracer.Trace(requestId, $"Request {nameof(context.Request.Host)}", context.Request.Host);
+                        this.tracer.Trace(requestId, $"Request {nameof(context.Request.ContentType)}", context.Request.ContentType);
+                        this.tracer.Trace(requestId, $"Request {nameof(context.User)}", context.User);
+                        this.tracer.Trace(requestId, $"Request {nameof(context.Request.Cookies)}", context.Request.Cookies);
+
+                        var req = context.Features.Get<IHttpRequestFeature>();
+                        if (req != null)
+                        {
+                            this.tracer.Trace(requestId, $"Request {nameof(req.Method)}", req.Method);
+                            this.tracer.Trace(requestId, $"Request {nameof(req.Body)}", req.Body);
+                            this.tracer.Trace(requestId, $"Request {nameof(req.Headers)}", req.Headers);
+                            this.tracer.Trace(requestId, $"Request {nameof(req.Path)}", req.Path);
+                            this.tracer.Trace(requestId, $"Request {nameof(req.PathBase)}", req.PathBase);
+                            this.tracer.Trace(requestId, $"Request {nameof(req.Protocol)}", req.Protocol);
+                            this.tracer.Trace(requestId, $"Request {nameof(req.QueryString)}", req.QueryString);
+                            this.tracer.Trace(requestId, $"Request {nameof(req.Scheme)}", req.Scheme);
+                        }
+
+                        var res = context.Features.Get<IHttpResponseFeature>();
+                        if (res != null)
+                        {
+                            this.tracer.Trace(requestId, $"Response {nameof(res.Body)}", res.Body);
+                            this.tracer.Trace(requestId, $"Response {nameof(res.HasStarted)}", res.HasStarted);
+                            this.tracer.Trace(requestId, $"Response {nameof(res.Headers)}", res.Headers);
+                            this.tracer.Trace(requestId, $"Response {nameof(res.ReasonPhrase)}", res.ReasonPhrase);
+                            this.tracer.Trace(requestId, $"Response {nameof(res.StatusCode)}", res.StatusCode);
+                        }
+
+                        var conn = context.Features.Get<IHttpConnectionFeature>();
+                        if (conn != null)
+                        {
+                            this.tracer.Trace(requestId, $"Connection {nameof(conn.ConnectionId)}", conn.ConnectionId);
+                            this.tracer.Trace(requestId, $"Connection {nameof(conn.LocalIpAddress)}", conn.LocalIpAddress);
+                            this.tracer.Trace(requestId, $"Connection {nameof(conn.LocalPort)}", conn.LocalPort);
+                            this.tracer.Trace(requestId, $"Connection {nameof(conn.RemoteIpAddress)}", conn.RemoteIpAddress);
+                            this.tracer.Trace(requestId, $"Connection {nameof(conn.RemotePort)}", conn.RemotePort);
+                        }
+                    }
+
+                    tracer.Trace(requestId, string.Format("Request completed in {0} ms for path {1}", stopWatch.ElapsedMilliseconds, path));
+                }
+            }
         }
     }
 }

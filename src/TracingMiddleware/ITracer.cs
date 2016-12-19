@@ -2,10 +2,11 @@
 {
     using System;
     using System.Collections.Generic;
+    using Microsoft.AspNetCore.Http;
 
     public interface ITracer
     {
-        IEnumerable<Func<IDictionary<string, object>, bool>> Filters { get; }
+        IEnumerable<Func<HttpContext, bool>> Filters { get; }
 
         bool IsEnabled { get; }
 
