@@ -92,7 +92,6 @@
             this.tracer.Trace(requestId, $"Request {nameof(context.Request.Host)}", context.Request.Host);
             this.tracer.Trace(requestId, $"Request {nameof(context.Request.ContentType)}", context.Request.ContentType);
             this.tracer.Trace(requestId, $"Request {nameof(context.User)}", context.User);
-            this.tracer.Trace(requestId, $"Request {nameof(context.Request.Cookies)}", context.Request.Cookies);
             this.tracer.Trace(requestId, $"Request {nameof(context.Request.Method)}", context.Request.Method);
             this.tracer.Trace(requestId, $"Request {nameof(context.Request.Body)}", context.Request.Body);
             this.tracer.Trace(requestId, $"Request {nameof(context.Request.Headers)}", context.Request.Headers);
