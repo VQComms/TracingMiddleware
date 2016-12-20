@@ -40,7 +40,7 @@
                             headers.Select(
                                 header => string.Format("[{0}:{1}]", header.Key, string.Join(",", header.Value))))) //Make nice with cookies
                     .ForType<ClaimsPrincipal>(user => string.Join(",", user.Claims.Select(x => x.Type + ":" + x.Value))) //Show claims
-                    .ForKey("owin.ResponseStatusCode", (requestId, value) => Console.WriteLine(requestId + " : *****" + value + "*****")) //Display status code differently
+                    .ForKey("Response StatusCode", (requestId, value) => Console.WriteLine(requestId + " : *****" + value + "*****")) //Display status code differently
                     .Ignore<Stream>() //Ignore keys that are Stream types
                     .Ignore(key => key.StartsWith("plop")); //Ignore keys that start with plop
 
