@@ -27,18 +27,12 @@
                         MessageFormat,
                         TracingMiddlewareOptions.DefaultTypeFormat, //object.ToString()
                         filters)
-                    .ForType<Microsoft.AspNetCore.Server.Kestrel.Internal.Http.FrameRequestHeaders>(
+                    .ForType<IHeaderDictionary>(
                         headers => string.Join(",",
-                            headers.Select(
-                                header => string.Format("[{0}:{1}]", header.Key, string.Join(",", header.Value))))) //Make nice with request headers
-                    .ForType<Microsoft.AspNetCore.Server.Kestrel.Internal.Http.FrameResponseHeaders>(
-                        headers => string.Join(",",
-                            headers.Select(
-                                header => string.Format("[{0}:{1}]", header.Key, string.Join(",", header.Value))))) //Make nice with response headers
+                            headers.Select(header => string.Format("[{0}:{1}]", header.Key, string.Join(",", header.Value)))))
                     .ForType<Microsoft.AspNetCore.Http.Internal.RequestCookieCollection>(
                         headers => string.Join(",",
-                            headers.Select(
-                                header => string.Format("[{0}:{1}]", header.Key, string.Join(",", header.Value))))) //Make nice with cookies
+                            headers.Select(header => string.Format("[{0}:{1}]", header.Key, string.Join(",", header.Value)))))
                     .ForType<ClaimsPrincipal>(user => string.Join(",", user.Claims.Select(x => x.Type + ":" + x.Value))) //Show claims
                     .ForKey("Response StatusCode", (requestId, value) => Console.WriteLine(requestId + " : *****" + value + "*****")) //Display status code differently
                     .Ignore<Stream>() //Ignore keys that are Stream types
