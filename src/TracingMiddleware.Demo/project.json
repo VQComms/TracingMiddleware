@@ -5,24 +5,21 @@
 
     "dependencies": {
         "TracingMiddleware": { "target": "project" },
-        "Nancy": "1.4.3",
-        "Nancy.Owin": "1.4.1",
-        "Microsoft.AspNetCore.Http.Abstractions": "1.0.0-rc2-final",
-        "Microsoft.AspNetCore.Hosting": "1.0.0-rc2-final",
-        "Microsoft.AspNetCore.Server.Kestrel": "1.0.0-rc2-final",
-        "Microsoft.AspNetCore.Owin": "1.0.0-rc2-final",
-        "Microsoft.Extensions.Configuration.Binder": "1.0.0-rc2-final",
-        "Microsoft.Extensions.Configuration.Json": "1.0.0-rc2-final"
+        "Nancy": "2.0.0-barneyrubble",
+        "Microsoft.AspNetCore.Hosting": "1.0.0",
+        "Microsoft.AspNetCore.Server.Kestrel": "1.0.0",
+        "Microsoft.AspNetCore.Owin": "1.0.0",
     },
 
     "frameworks": {
-        "net452": {
+        "netcoreapp1.0": {
             "dependencies": {
-
+                "Microsoft.NETCore.App": {
+                    "type": "platform",
+                    "version": "1.0.1"
+                },
             },
-             "imports": [
-                "dotnet54",
-                "portable-net451+win8"
+            "imports": [
             ]
         }
     }

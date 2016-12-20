@@ -7,11 +7,11 @@
     {
         public HomeModule()
         {
-            Get["/"] = _ => "I'll be there in three shakes of a lamb's tail.";
+            Get("/", _ => "I'll be there in three shakes of a lamb's tail.");
 
-            Get["/error"] = _ => { throw new Exception("oops"); };
+            Get("/error", _ => { throw new Exception("oops"); });
 
-            Get["/notfound"] = _ => 404;
+            Get("/notfound", _ => 404);
         }
     }
 }

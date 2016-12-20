@@ -8,6 +8,7 @@
     using System.Linq;
     using System.Threading;
     using System.Reflection;
+    using Microsoft.AspNetCore.Http;
 
     public delegate void Trace(string requestId, string message);
 
@@ -23,7 +24,7 @@
         public static readonly TypeFormat DefaultTypeFormat = value => value.ToString();
         public static readonly Trace DefaultTrace = (requestId, message) => Console.WriteLine(requestId + " : " + message);
         public static readonly TracingMiddlewareOptions Default;
-        public static readonly IEnumerable<Func<IDictionary<string, object>, bool>> DefaultTracingFilters = Enumerable.Empty<Func<IDictionary<string, object>, bool>>();
+        public static readonly IEnumerable<Func<HttpContext, bool>> DefaultTracingFilters = Enumerable.Empty<Func<HttpContext, bool>>();
         private readonly TypeFormat defaultTypeFormat;
         private readonly List<Predicate<string>> ignoreKeyPredicates = new List<Predicate<string>>();
         private readonly HashSet<string> ignoreKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -34,7 +35,7 @@
         private readonly Func<bool> isEnabled;
         private readonly Dictionary<string, Trace> keyTracers = new Dictionary<string, Trace>();
         private readonly MessageFormat messageFormat;
-        private readonly List<Func<IDictionary<string, object>, bool>> filters = new List<Func<IDictionary<string, object>, bool>>();
+        private readonly List<Func<HttpContext, bool>> filters = new List<Func<HttpContext, bool>>();
 
 
         private readonly ConcurrentDictionary<string, bool> shouldIgnoreKeyCache =
@@ -67,7 +68,7 @@
                         return reader.ReadToEnd();
                     }
                 })
-                .ForType<IDictionary<string, string[]>>(
+                .ForType<IHeaderDictionary>(
                     headers => string.Join(",",
                         headers.Select(header => string.Format("[{0}:{1}]", header.Key, string.Join(",", header.Value)))));
         }
@@ -92,7 +93,7 @@
         {
         }
 
-        public TracingMiddlewareOptions(Trace trace, MessageFormat messageFormat, TypeFormat defaultTypeFormat, IEnumerable<Func<IDictionary<string, object>, bool>> filters, Func<bool> isEnabled = null)
+        public TracingMiddlewareOptions(Trace trace, MessageFormat messageFormat, TypeFormat defaultTypeFormat, IEnumerable<Func<HttpContext, bool>> filters, Func<bool> isEnabled = null)
         {
             if (trace == null) throw new ArgumentNullException("trace");
             if (messageFormat == null) throw new ArgumentNullException("messageFormat");
@@ -120,7 +121,7 @@
             get { return messageFormat; }
         }
 
-        public IEnumerable<Func<IDictionary<string, object>, bool>> Filters
+        public IEnumerable<Func<HttpContext, bool>> Filters
         {
             get { return filters; }
         }
@@ -179,7 +180,7 @@
             return this;
         }
 
-        public TracingMiddlewareOptions AddFilter(Func<IDictionary<string, object>, bool> filter)
+        public TracingMiddlewareOptions AddFilter(Func<HttpContext, bool> filter)
         {
             this.filters.Add(filter);
             return this;

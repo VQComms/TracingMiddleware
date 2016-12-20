@@ -1,17 +1,15 @@
 ﻿namespace TracingMiddleware.Tests
 {
+    using Microsoft.AspNetCore.Http;
     using System;
     using System.Collections.Generic;
-    using MidFunc = System.Func<
-      System.Func<System.Collections.Generic.IDictionary<string, object>, System.Threading.Tasks.Task>,
-      System.Func<System.Collections.Generic.IDictionary<string, object>, System.Threading.Tasks.Task>
-      >;
-    using System.Linq;
     using System.Threading.Tasks;
     using Xunit;
-
-    using AppFunc = System.Func<System.Collections.Generic.IDictionary<string, object>, System.Threading.Tasks.Task>;
-
+    using System.Net.Http;
+    using Microsoft.AspNetCore.TestHost;
+    using Microsoft.AspNetCore.Hosting;
+    using Microsoft.AspNetCore.Builder;
+    using System.Linq;
 
     public class TracingMiddlewareTests
     {
@@ -30,17 +28,14 @@
 
             var options = GetTracingMiddlewareOptions(traceAction);
 
-
-            var tracingpipeline = CreateTracingOwinPipeline(GetNextFunc(), options);
-
-            var environment = GetEnvironment();
+            var client = this.GetClient(options);
 
             //When
-            await tracingpipeline(environment);
+            await client.GetAsync("/");
 
             //Then
             Assert.True(logged);
-            Assert.Equal(5, requestList.Count);   //Add 2 to env above, middleware adds requestid, and middleware logs start/stop
+            Assert.Equal(18, requestList.Count); //Add 2 to env above, middleware adds requestid, and middleware logs start/stop
         }
 
         [Fact]
@@ -48,7 +43,7 @@
         {
             //Given
             var logged = false;
-            var requestList = new Dictionary<string,string>();
+            var requestList = new Dictionary<string, string>();
 
             Action<string, string> traceAction = (key, value) =>
             {
@@ -58,14 +53,10 @@
 
             var options = GetTracingMiddlewareOptions(traceAction);
 
-
-            var tracingpipeline = CreateTracingOwinPipeline(GetNextFunc(), options);
-
-            var environment = GetEnvironment();
-            environment.Add("owin.RequestId", Guid.Empty.ToString());
+            var client = this.GetClient(options, removeRequestId: true);
 
             //When
-            await tracingpipeline(environment);
+            await client.GetAsync("/");
 
             var loggedItem = Guid.Parse(requestList.First().Key);
 
@@ -89,21 +80,13 @@
 
             var options = GetTracingMiddlewareOptions(traceAction);
 
+            var client = this.GetClient(options);
 
-            var tracingpipeline = CreateTracingOwinPipeline(GetNextFunc(), options);
-
-            var environment = new Dictionary<string, object>
-            {
-                { "owin.RequestHeaders", new Dictionary<string, string[]>() { { "Accept", new[] { "application/json" } } } },
-                { "owin.RequestPath", "/some/place?q=nice" }
-            };
-
-            //When
-            await tracingpipeline(environment);
+            await client.GetAsync("/some/place?q=nice");
 
             //Then
             Assert.True(logged);
-            Assert.Equal("Request Start: /some/place?q=nice", requestList.First());   //Add 2 to env above, middleware adds requestid, and middleware logs start/stop
+            Assert.Equal("Request Start: /some/place?q=nice", requestList.First()); //Add 2 to env above, middleware adds requestid, and middleware logs start/stop
         }
 
         [Fact]
@@ -115,7 +98,7 @@
 
             Action<string, string> traceAction = (key, value) =>
             {
-                if (value.StartsWith("owin.request", StringComparison.OrdinalIgnoreCase))
+                if (!value.StartsWith("Response", StringComparison.OrdinalIgnoreCase))
                 {
                     return;
                 }
@@ -126,46 +109,10 @@
 
             var options = GetTracingMiddlewareOptions(traceAction);
 
-            var tracingpipeline = CreateTracingOwinPipeline(GetNextFuncWithOwinResponseKeys(), options);
-
-            var environment = GetEnvironment();
+            var client = this.GetClient(options);
 
             //When
-            await tracingpipeline(environment);
-
-            //Then
-            Assert.True(logged);
-            Assert.Equal(3, requestList.Count);
-        }
-
-        [Fact]
-        public async Task Should_Log_Other_Keys()
-        {
-            //Given
-            var logged = false;
-            var requestList = new List<string>();
-
-            Action<string, string> traceAction = (key, value) =>
-            {
-                if (value.StartsWith("owin.request", StringComparison.OrdinalIgnoreCase))
-                {
-                    return;
-                }
-
-                logged = true;
-                requestList.Add(value);
-            };
-
-            var options = GetTracingMiddlewareOptions(traceAction);
-
-            var next = GetNextFuncWithOwinResponseAndServerKeys();
-
-            var tracingpipeline = CreateTracingOwinPipeline(next, options);
-
-            var environment = GetEnvironment();
-
-            //When
-            await tracingpipeline(environment);
+            await client.GetAsync("/");
 
             //Then
             Assert.True(logged);
@@ -178,21 +125,14 @@
             //Given
             var requestList = new List<string>();
 
-            Action<string, string> traceAction = (key, value) =>
-            {
-                requestList.Add(value);
-            };
+            Action<string, string> traceAction = (key, value) => { requestList.Add(value); };
 
             var options = GetTracingMiddlewareOptions(traceAction);
 
-            var next = GetNextFunc();
-
-            var tracingpipeline = CreateTracingOwinPipeline(next, options);
-
-            var environment = GetEnvironment();
+            var client = this.GetClient(options);
 
             //When
-            await tracingpipeline(environment);
+            await client.GetAsync("/");
 
             //Then
             Assert.True(requestList.Any(x => x.StartsWith("Request completed")));
@@ -204,29 +144,18 @@
             //Given
             var requestList = new List<string>();
 
-            Action<string, string> traceAction = (key, value) =>
-            {
-                requestList.Add(value);
-            };
+            Action<string, string> traceAction = (key, value) => { requestList.Add(value); };
 
             var options = GetTracingMiddlewareOptions(traceAction);
 
-            Func<IDictionary<string, object>, bool> internalexceptionfilter = environment =>
-            {
-                var owinkvp = environment.FirstOrDefault(x => x.Key == "owin.ResponseStatusCode" && (int)x.Value == 500);
-                return !owinkvp.Equals(default(KeyValuePair<string, object>));
-            };
+            Func<HttpContext, bool> internalexceptionfilter = context => context.Response.StatusCode == 500;
 
             options.AddFilter(internalexceptionfilter);
 
-            var next = GetNextFuncWithOwinResponseKeys();
-
-            var tracingpipeline = CreateTracingOwinPipeline(next, options);
-
-            var owinenvironment = GetEnvironment();
+            var client = this.GetClient(options);
 
             //When
-            await tracingpipeline(owinenvironment);
+            await client.GetAsync("/");
 
             //Then
             Assert.Equal(2, requestList.Count);
@@ -238,78 +167,23 @@
             //Given
             var requestList = new List<string>();
 
-            Action<string, string> traceAction = (key, value) =>
-            {
-                requestList.Add(value);
-            };
+            Action<string, string> traceAction = (key, value) => { requestList.Add(value); };
 
             var options = GetTracingMiddlewareOptions(traceAction);
 
-            var next = GetNextFuncThatThrows();
-
-            var tracingpipeline = CreateTracingOwinPipeline(next, options);
-
-            var owinenvironment = GetEnvironment();
+            var client = this.GetClient(options, throwException: true);
 
             //When
             try
             {
-                await tracingpipeline(owinenvironment);
+                await client.GetAsync("/");
             }
-            catch (Exception)
+            catch (Exception ex)
             {
             }
 
             //Then
-            Assert.True(requestList.Any(x => x == "my app broke"));
-        }
-
-        private AppFunc GetNextFuncThatThrows()
-        {
-            return env =>
-            {
-                throw new Exception("my app broke");
-            };
-        }
-
-        private Dictionary<string, object> GetEnvironment()
-        {
-            var environment = new Dictionary<string, object>
-            {
-                { "owin.RequestHeaders", new Dictionary<string, string[]>() { { "Accept", new[] { "application/json" } } } },
-                { "owin.RequestPath", "/" }
-            };
-            return environment;
-        }
-
-        public AppFunc GetNextFunc()
-        {
-            return env => Task.FromResult(123);
-        }
-
-        private AppFunc GetNextFuncWithOwinResponseKeys()
-        {
-            return env =>
-            {
-                env.Add("owin.ResponseStatusCode", 200);
-                return Task.FromResult(123);
-            };
-        }
-
-        private AppFunc GetNextFuncWithOwinResponseAndServerKeys()
-        {
-            return env =>
-            {
-                env.Add("owin.ResponseStatusCode", 200);
-                env.Add("server.user", "VincentVega");
-                return Task.FromResult(123);
-            };
-        }
-
-        public AppFunc CreateTracingOwinPipeline(AppFunc nextFunc, TracingMiddlewareOptions tracingMiddlewareOptions = null)
-        {
-            tracingMiddlewareOptions = tracingMiddlewareOptions ?? GetTracingMiddlewareOptions((s, s1) => TracingMiddlewareOptions.DefaultTrace(s, s1));
-            return TracingMiddleware.Tracing(tracingMiddlewareOptions)(nextFunc);
+            Assert.True(requestList.Any(x => x.Contains("my app broke")));
         }
 
         private TracingMiddlewareOptions GetTracingMiddlewareOptions(Action<string, string> traceAction)
@@ -317,6 +191,34 @@
             return new TracingMiddlewareOptions((id, message) => traceAction(id, message));
         }
 
+        private HttpClient GetClient(TracingMiddlewareOptions options = null, bool throwException = false, bool removeRequestId = false)
+        {
+            var server = new TestServer(new WebHostBuilder().Configure(app =>
+            {
+                if (removeRequestId)
+                {
+                    app.Use(async (context, next) =>
+                    {
+                        context.TraceIdentifier = string.Empty;
+                        await next();
+                    });
+                }
 
+                app.UseTracingMiddleware(options);
+
+                app.Run((ctx) =>
+                {
+                    if (throwException)
+                    {
+                        throw new Exception("my app broke");
+                    }
+
+                    ctx.Response.StatusCode = StatusCodes.Status200OK;
+                    return Task.CompletedTask;
+                });
+            }));
+
+            return server.CreateClient();
+        }
     }
 }

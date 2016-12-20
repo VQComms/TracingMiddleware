@@ -1,24 +1,32 @@
 {
-    "version": "1.0.6",
-    "authors": [ "VQComms" ],
+    "version": "1.0.8",
+    "authors": [
+        "VQComms"
+    ],
     "title": "TracingMiddleware",
     "description": "\nEnable tracing to log entries in the OWIN pipeline.\nOWIN Keys/Types can be included/ignored.\nFilters can be supplied so tracing occurs when all filter conditions are matched.\nLog format, type format, log action can be globally set whilst type format and log actions can be set individually for each type and key.\nEnables granular OWIN pipeline logging.",
     "packOptions": {
-        "releaseNotes": "\nv1.0.6 - ConfigureAwait added\nv1.0.5 - CoreCLR compatible.\nv1.0.4 - Checks environment RequestId is not empty.\nv1.0.3 - Added request path to Request Start/End log entries.\nv1.0.2 - Added tracing for exceptions thrown by middleware.\nv1.0.1 - Added ability to add filters on Default options",
-        "owners": [ "VQComms" ],
+        "releaseNotes": "\nv1.0.8 - Moved to ASP.Net core\nv1.0.7 - Guid.TryParse added\nv1.0.6 - ConfigureAwait added\nv1.0.5 - CoreCLR compatible.\nv1.0.4 - Checks environment RequestId is not empty.\nv1.0.3 - Added request path to Request Start/End log entries.\nv1.0.2 - Added tracing for exceptions thrown by middleware.\nv1.0.1 - Added ability to add filters on Default options",
+        "owners": [
+            "VQComms"
+        ],
         "licenseUrl": "https://github.com/VQComms/TracingMiddleware/blob/master/LICENSE",
         "projectUrl": "https://github.com/VQComms/TracingMiddleware/",
         "requireLicenseAcceptance": false,
         "summary": "Enable tracing to log entries in the OWIN pipeline",
-        "tags": [ "owin", "logging", "tracing", "diagnostics" ]
+        "tags": [
+            "owin",
+            "logging",
+            "tracing",
+            "diagnostics"
+        ]
     },
-
     "frameworks": {
-        "netstandard1.5": {
+        "netstandard1.6": {
             "dependencies": {
-                "NETStandard.Library": "1.5.0-rc2-24027"
+                "NETStandard.Library": "1.6.0",
+                "Microsoft.AspNetCore.Http.Abstractions": "1.0.0"
             }
-        },
-        "net452": { }
+        }
     }
 }
