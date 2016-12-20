@@ -1,23 +1,22 @@
 #TracingMiddleware
 
-Enable tracing to log entries in the OWIN pipeline.  
+Enable tracing to log entries in the ASP.Net Core pipeline.  
 
-OWIN Keys/Types can be included/ignored. 
+Keys/Types can be included/ignored. 
 
 Log format, type format, log action can be globally set whilst type format and log actions can be set individually for each type and key.
 
-Enables granular OWIN pipeline logging.
+Enables granular pipeline logging.
 
 ##Default Usage
 
 ```
-public void Configuration(IAppBuilder app)
+public void Configuration(IApplicationBuilder app)
 {
   var defaultOptions = TracingMiddlewareOptions.Default;
   
-   app
-      .Use(TracingMiddleware.Tracing(defaultOptions))
-      .UseNancy();
+   app.UseTracingMiddleware(defaultOptions);
+   app.UseOwin(x => x.UseNancy());
 }
 ```
 
