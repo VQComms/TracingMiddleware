@@ -8,6 +8,7 @@
     using System.Linq;
     using System.Threading;
     using System.Reflection;
+    using System.Security.Claims;
     using Microsoft.AspNetCore.Http;
 
     public delegate void Trace(string requestId, string message);
@@ -70,7 +71,9 @@
                 })
                 .ForType<IHeaderDictionary>(
                     headers => string.Join(",",
-                        headers.Select(header => string.Format("[{0}:{1}]", header.Key, string.Join(",", header.Value)))));
+                        headers.Select(header => string.Format("[{0}:{1}]", header.Key, string.Join(",", header.Value)))))
+                .ForType<ClaimsPrincipal>(user => string.Join(",", user.Claims.Select(x => x.Type + ":" + x.Value)));
+
         }
 
         public TracingMiddlewareOptions(Func<bool> isEnabled = null)
