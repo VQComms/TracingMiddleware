@@ -22,8 +22,8 @@
 
         public async Task Invoke(HttpContext context)
         {
-            this.tracer = new SafeTracer(this.tracer);
-            if (!tracer.IsEnabled)
+            var localTracer = new SafeTracer(this.tracer);
+            if (!localTracer.IsEnabled)
             {
                 await this.nextFunc(context).ConfigureAwait(false);
             }
@@ -41,7 +41,7 @@
                 }
 
                 var path = context.Request.Path + context.Request.QueryString;
-                tracer.Trace(requestId, "Request Start: " + path);
+                localTracer.Trace(requestId, "Request Start: " + path);
 
                 var stopWatch = Stopwatch.StartNew();
 
@@ -51,55 +51,55 @@
                 }
                 catch (Exception exception)
                 {
-                    tracer.Trace(requestId, exception.ToString());
+                    localTracer.Trace(requestId, exception.ToString());
                     throw;
                 }
                 finally
                 {
                     stopWatch.Stop();
 
-                    if (tracer.Filters.All(filter => filter.Invoke(context)))
+                    if (localTracer.Filters.All(filter => filter.Invoke(context)))
                     {
-                        LogRequest(context, requestId);
-                        LogResponse(context, requestId);
-                        LogConnection(context, requestId);
+                        LogRequest(localTracer, context, requestId);
+                        LogResponse(localTracer, context, requestId);
+                        LogConnection(localTracer, context, requestId);
                     }
 
-                    tracer.Trace(requestId, $"Request completed in {stopWatch.ElapsedMilliseconds} ms for path {path}");
+                    localTracer.Trace(requestId, $"Request completed in {stopWatch.ElapsedMilliseconds} ms for path {path}");
                 }
             }
         }
 
-        private void LogConnection(HttpContext context, string requestId)
+        private void LogConnection(ITracer tracer, HttpContext context, string requestId)
         {
-            this.tracer.Trace(requestId, $"Connection {nameof(context.Connection.LocalIpAddress)}", context.Connection.LocalIpAddress);
-            this.tracer.Trace(requestId, $"Connection {nameof(context.Connection.LocalPort)}", context.Connection.LocalPort);
-            this.tracer.Trace(requestId, $"Connection {nameof(context.Connection.RemoteIpAddress)}", context.Connection.RemoteIpAddress);
-            this.tracer.Trace(requestId, $"Connection {nameof(context.Connection.RemotePort)}", context.Connection.RemotePort);
+            tracer.Trace(requestId, $"Connection {nameof(context.Connection.LocalIpAddress)}", context.Connection.LocalIpAddress);
+            tracer.Trace(requestId, $"Connection {nameof(context.Connection.LocalPort)}", context.Connection.LocalPort);
+            tracer.Trace(requestId, $"Connection {nameof(context.Connection.RemoteIpAddress)}", context.Connection.RemoteIpAddress);
+            tracer.Trace(requestId, $"Connection {nameof(context.Connection.RemotePort)}", context.Connection.RemotePort);
         }
 
-        private void LogResponse(HttpContext context, string requestId)
+        private void LogResponse(ITracer tracer, HttpContext context, string requestId)
         {
-            this.tracer.Trace(requestId, $"Response {nameof(context.Response.Body)}", context.Response.Body);
-            this.tracer.Trace(requestId, $"Response {nameof(context.Response.HasStarted)}", context.Response.HasStarted);
-            this.tracer.Trace(requestId, $"Response {nameof(context.Response.Headers)}", context.Response.Headers);
-            this.tracer.Trace(requestId, $"Response {nameof(context.Response.StatusCode)}", context.Response.StatusCode);
+            tracer.Trace(requestId, $"Response {nameof(context.Response.Body)}", context.Response.Body);
+            tracer.Trace(requestId, $"Response {nameof(context.Response.HasStarted)}", context.Response.HasStarted);
+            tracer.Trace(requestId, $"Response {nameof(context.Response.Headers)}", context.Response.Headers);
+            tracer.Trace(requestId, $"Response {nameof(context.Response.StatusCode)}", context.Response.StatusCode);
         }
 
-        private void LogRequest(HttpContext context, string requestId)
+        private void LogRequest(ITracer tracer, HttpContext context, string requestId)
         {
-            this.tracer.Trace(requestId, $"Request {nameof(context.Request.Cookies)}", context.Request.Cookies);
-            this.tracer.Trace(requestId, $"Request {nameof(context.Request.Host)}", context.Request.Host);
-            this.tracer.Trace(requestId, $"Request {nameof(context.Request.ContentType)}", context.Request.ContentType);
-            this.tracer.Trace(requestId, $"Request {nameof(context.User)}", context.User);
-            this.tracer.Trace(requestId, $"Request {nameof(context.Request.Method)}", context.Request.Method);
-            this.tracer.Trace(requestId, $"Request {nameof(context.Request.Body)}", context.Request.Body);
-            this.tracer.Trace(requestId, $"Request {nameof(context.Request.Headers)}", context.Request.Headers);
-            this.tracer.Trace(requestId, $"Request {nameof(context.Request.Path)}", context.Request.Path);
-            this.tracer.Trace(requestId, $"Request {nameof(context.Request.PathBase)}", context.Request.PathBase);
-            this.tracer.Trace(requestId, $"Request {nameof(context.Request.Protocol)}", context.Request.Protocol);
-            this.tracer.Trace(requestId, $"Request {nameof(context.Request.QueryString)}", context.Request.QueryString);
-            this.tracer.Trace(requestId, $"Request {nameof(context.Request.Scheme)}", context.Request.Scheme);
+            tracer.Trace(requestId, $"Request {nameof(context.Request.Cookies)}", context.Request.Cookies);
+            tracer.Trace(requestId, $"Request {nameof(context.Request.Host)}", context.Request.Host);
+            tracer.Trace(requestId, $"Request {nameof(context.Request.ContentType)}", context.Request.ContentType);
+            tracer.Trace(requestId, $"Request {nameof(context.User)}", context.User);
+            tracer.Trace(requestId, $"Request {nameof(context.Request.Method)}", context.Request.Method);
+            tracer.Trace(requestId, $"Request {nameof(context.Request.Body)}", context.Request.Body);
+            tracer.Trace(requestId, $"Request {nameof(context.Request.Headers)}", context.Request.Headers);
+            tracer.Trace(requestId, $"Request {nameof(context.Request.Path)}", context.Request.Path);
+            tracer.Trace(requestId, $"Request {nameof(context.Request.PathBase)}", context.Request.PathBase);
+            tracer.Trace(requestId, $"Request {nameof(context.Request.Protocol)}", context.Request.Protocol);
+            tracer.Trace(requestId, $"Request {nameof(context.Request.QueryString)}", context.Request.QueryString);
+            tracer.Trace(requestId, $"Request {nameof(context.Request.Scheme)}", context.Request.Scheme);
         }
     }
 }
