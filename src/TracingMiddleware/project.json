@@ -6,7 +6,7 @@
     "title": "TracingMiddleware",
     "description": "\nEnable tracing to log entries in the OWIN pipeline.\nOWIN Keys/Types can be included/ignored.\nFilters can be supplied so tracing occurs when all filter conditions are matched.\nLog format, type format, log action can be globally set whilst type format and log actions can be set individually for each type and key.\nEnables granular OWIN pipeline logging.",
     "packOptions": {
-        "releaseNotes": "\nv2.0.0 - Moved to ASP.Net core\nv1.0.7 - Guid.TryParse added\nv1.0.6 - ConfigureAwait added\nv1.0.5 - CoreCLR compatible.\nv1.0.4 - Checks environment RequestId is not empty.\nv1.0.3 - Added request path to Request Start/End log entries.\nv1.0.2 - Added tracing for exceptions thrown by middleware.\nv1.0.1 - Added ability to add filters on Default options",
+        "releaseNotes": "\nv2.0.1 - Fixed a stackoverflow exception with cyclic tracer\nv2.0.0 - Moved to ASP.Net core\nv1.0.7 - Guid.TryParse added\nv1.0.6 - ConfigureAwait added\nv1.0.5 - CoreCLR compatible.\nv1.0.4 - Checks environment RequestId is not empty.\nv1.0.3 - Added request path to Request Start/End log entries.\nv1.0.2 - Added tracing for exceptions thrown by middleware.\nv1.0.1 - Added ability to add filters on Default options",
         "owners": [
             "VQComms"
         ],
