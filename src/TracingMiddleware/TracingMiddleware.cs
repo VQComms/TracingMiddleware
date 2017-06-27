@@ -41,7 +41,7 @@
                 }
 
                 var path = context.Request.Path + context.Request.QueryString;
-                localTracer.Trace(requestId, "Request Start: " + path);
+                localTracer.Trace(requestId, $"Request Start: {context.Request.Method} {path}");
 
                 var stopWatch = Stopwatch.StartNew();
 
@@ -65,7 +65,7 @@
                         LogConnection(localTracer, context, requestId);
                     }
 
-                    localTracer.Trace(requestId, $"Request completed in {stopWatch.ElapsedMilliseconds} ms for path {path}");
+                    localTracer.Trace(requestId, $"Request completed in {stopWatch.ElapsedMilliseconds} ms for path {context.Request.Method} {path}");
                 }
             }
         }
