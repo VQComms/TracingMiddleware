@@ -1,0 +1,37 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Description>
+Enable tracing to log entries in the OWIN pipeline.
+OWIN Keys/Types can be included/ignored.
+Filters can be supplied so tracing occurs when all filter conditions are matched.
+Log format, type format, log action can be globally set whilst type format and log actions can be set individually for each type and key.
+Enables granular OWIN pipeline logging.</Description>
+    <AssemblyTitle>TracingMiddleware</AssemblyTitle>
+    <VersionPrefix>2.0.2</VersionPrefix>
+    <Authors>VQComms</Authors>
+    <TargetFramework>netstandard1.6</TargetFramework>
+    <AssemblyName>TracingMiddleware</AssemblyName>
+    <PackageId>TracingMiddleware</PackageId>
+    <PackageTags>owin;logging;tracing;diagnostics</PackageTags>
+    <PackageReleaseNotes>
+v2.0.2 - Added request method to output
+v2.0.1 - Fixed a stackoverflow exception with cyclic tracer
+v2.0.0 - Moved to ASP.Net core
+v1.0.7 - Guid.TryParse added
+v1.0.6 - ConfigureAwait added
+v1.0.5 - CoreCLR compatible.
+v1.0.4 - Checks environment RequestId is not empty.
+v1.0.3 - Added request path to Request Start/End log entries.
+v1.0.2 - Added tracing for exceptions thrown by middleware.
+v1.0.1 - Added ability to add filters on Default options</PackageReleaseNotes>
+    <PackageProjectUrl>https://github.com/VQComms/TracingMiddleware/</PackageProjectUrl>
+    <PackageLicenseUrl>https://github.com/VQComms/TracingMiddleware/blob/master/LICENSE</PackageLicenseUrl>
+    <NetStandardImplicitPackageVersion>1.6.0</NetStandardImplicitPackageVersion>
+  </PropertyGroup>
+
+  <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard1.6' ">
+    <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="1.0.2" />
+  </ItemGroup>
+
+</Project>
