@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp1.1</TargetFramework>
+    <AssemblyName>TracingMiddleware.Demo</AssemblyName>
+    <OutputType>Exe</OutputType>
+    <PackageId>TracingMiddleware.Demo</PackageId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../TracingMiddleware/TracingMiddleware.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Nancy" Version="2.0.0-clinteastwood" />
+    <PackageReference Include="Microsoft.AspNetCore.Hosting" Version="1.1.2" />
+    <PackageReference Include="Microsoft.AspNetCore.Server.Kestrel" Version="1.1.2" />
+    <PackageReference Include="Microsoft.AspNetCore.Owin" Version="1.1.2" />
+  </ItemGroup>
+
+</Project>

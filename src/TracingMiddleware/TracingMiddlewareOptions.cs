@@ -35,7 +35,7 @@
         private readonly HashSet<Type> includeTypes = new HashSet<Type>();
         private readonly Func<bool> isEnabled;
         private readonly Dictionary<string, Trace> keyTracers = new Dictionary<string, Trace>();
-        private readonly MessageFormat messageFormat;
+
         private readonly List<Func<HttpContext, bool>> filters = new List<Func<HttpContext, bool>>();
 
 
@@ -45,7 +45,6 @@
         private readonly ConcurrentDictionary<Type, bool> shouldIgnoreTypeCache =
             new ConcurrentDictionary<Type, bool>();
 
-        private readonly Trace trace;
         private readonly Dictionary<Type, TypeFormat> typeFormatters = new Dictionary<Type, TypeFormat>();
 
         private readonly ConcurrentDictionary<Type, TypeFormat> typeFormattersCache =
@@ -102,32 +101,20 @@
             if (messageFormat == null) throw new ArgumentNullException("messageFormat");
             if (defaultTypeFormat == null) throw new ArgumentNullException("defaultTypeFormat");
 
-            this.trace = trace;
-            this.messageFormat = messageFormat;
+            this.Trace = trace;
+            this.MessageFormat = messageFormat;
             this.defaultTypeFormat = defaultTypeFormat;
             this.isEnabled = isEnabled ?? (() => true);
             this.filters.AddRange(filters);
         }
 
-        public Trace Trace
-        {
-            get { return trace; }
-        }
+        public Trace Trace { get; }
 
-        public bool IsEnabled
-        {
-            get { return isEnabled(); }
-        }
+        public bool IsEnabled => isEnabled();
 
-        public MessageFormat MessageFormat
-        {
-            get { return messageFormat; }
-        }
+        public MessageFormat MessageFormat { get; }
 
-        public IEnumerable<Func<HttpContext, bool>> Filters
-        {
-            get { return filters; }
-        }
+        public IEnumerable<Func<HttpContext, bool>> Filters => filters;
 
         public TracingMiddlewareOptions ForType<T>(Func<T, string> format)
         {

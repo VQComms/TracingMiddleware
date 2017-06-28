@@ -1,13 +1,13 @@
-﻿
+
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25123.0
+# Visual Studio 15
+VisualStudioVersion = 15.0.26114.2
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "TracingMiddleware", "TracingMiddleware\TracingMiddleware.xproj", "{A41AC2B3-AF6F-4B1F-9A6A-24758B364C19}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TracingMiddleware", "TracingMiddleware\TracingMiddleware.csproj", "{A41AC2B3-AF6F-4B1F-9A6A-24758B364C19}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "TracingMiddleware.Tests", "TracingMiddleware.Tests\TracingMiddleware.Tests.xproj", "{1F6E3EEA-C813-4B89-BDF3-E150F15CE09C}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TracingMiddleware.Tests", "TracingMiddleware.Tests\TracingMiddleware.Tests.csproj", "{1F6E3EEA-C813-4B89-BDF3-E150F15CE09C}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "TracingMiddleware.Demo", "TracingMiddleware.Demo\TracingMiddleware.Demo.xproj", "{AFFAB551-9F2D-49E5-82D6-2B03514B6E29}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TracingMiddleware.Demo", "TracingMiddleware.Demo\TracingMiddleware.Demo.csproj", "{AFFAB551-9F2D-49E5-82D6-2B03514B6E29}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

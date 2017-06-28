@@ -178,7 +178,7 @@
             {
                 await client.GetAsync("/");
             }
-            catch (Exception ex)
+            catch (Exception)
             {
             }
 
