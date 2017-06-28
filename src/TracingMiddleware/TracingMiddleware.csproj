@@ -27,7 +27,6 @@ v1.0.2 - Added tracing for exceptions thrown by middleware.
 v1.0.1 - Added ability to add filters on Default options</PackageReleaseNotes>
     <PackageProjectUrl>https://github.com/VQComms/TracingMiddleware/</PackageProjectUrl>
     <PackageLicenseUrl>https://github.com/VQComms/TracingMiddleware/blob/master/LICENSE</PackageLicenseUrl>
-    <NetStandardImplicitPackageVersion>1.6.0</NetStandardImplicitPackageVersion>
   </PropertyGroup>
 
   <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard1.6' ">
